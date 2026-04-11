@@ -6,17 +6,20 @@ import '../models/bmi_record.dart';
 ///
 /// Schema version history:
 ///   v1 — initial: bmi_records, local_users
+///   v2 — health context: added health_conditions, pregnancy_status, pre_pregnancy_weight to bmi_records;
+///        added health_settings table for persistent user health data
 ///
 /// All writes are local-first. [SyncService] handles pushing to / pulling
 /// from Firestore in the background.
 class AppDatabase {
   static Database? _db;
-  static const int _schemaVersion = 1;
+  static const int _schemaVersion = 2;
   static const String _dbName = 'bmi_app.db';
 
   // ── Tables ─────────────────────────────────────────────────────────────────
   static const String _tableBmi = 'bmi_records';
   static const String _tableUsers = 'local_users';
+  static const String _tableHealthSettings = 'health_settings';
 
   // ── Singleton access ───────────────────────────────────────────────────────
   static Future<Database> get database async {
@@ -60,7 +63,10 @@ class AppDatabase {
         recorded_at INTEGER NOT NULL,
         is_synced   INTEGER NOT NULL DEFAULT 0,
         is_deleted  INTEGER NOT NULL DEFAULT 0,
-        remote_id   TEXT
+        remote_id   TEXT,
+        health_conditions TEXT,
+        pregnancy_status TEXT,
+        pre_pregnancy_weight REAL
       )
     ''');
 
@@ -83,10 +89,50 @@ class AppDatabase {
         last_synced_at  INTEGER
       )
     ''');
+
+    // ── health_settings ──────────────────────────────────────────────────────
+    await db.execute('''
+      CREATE TABLE $_tableHealthSettings (
+        user_id             TEXT    PRIMARY KEY,
+        health_conditions   TEXT,
+        pregnancy_status    TEXT,
+        pre_pregnancy_weight REAL,
+        created_at          INTEGER NOT NULL,
+        updated_at          INTEGER NOT NULL
+      )
+    ''');
   }
 
   static Future<void> _onUpgrade(Database db, int from, int to) async {
-    // Add future migrations here, e.g.:
+    // Migrate from v1 to v2: add health context columns
+    if (from < 2) {
+      try {
+        await db.execute(
+            'ALTER TABLE $_tableBmi ADD COLUMN health_conditions TEXT');
+        await db.execute(
+            'ALTER TABLE $_tableBmi ADD COLUMN pregnancy_status TEXT');
+        await db.execute(
+            'ALTER TABLE $_tableBmi ADD COLUMN pre_pregnancy_weight REAL');
+      } catch (_) {
+        // Columns may already exist in some cases
+      }
+
+      // Create health_settings table for new schema
+      try {
+        await db.execute('''
+          CREATE TABLE $_tableHealthSettings (
+            user_id             TEXT    PRIMARY KEY,
+            health_conditions   TEXT,
+            pregnancy_status    TEXT,
+            pre_pregnancy_weight REAL,
+            created_at          INTEGER NOT NULL,
+            updated_at          INTEGER NOT NULL
+          )
+        ''');
+      } catch (_) {
+        // Table may already exist
+      }
+    }
     // if (from < 2) { await db.execute('ALTER TABLE ...'); }
   }
 

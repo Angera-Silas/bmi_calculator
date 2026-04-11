@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants.dart';
 import '../calculator_brain.dart';
+import '../models/diet_recommendation.dart';
 import '../widgets/bmi_gauge.dart';
 
 class ResultsPage extends StatelessWidget {
@@ -41,6 +42,7 @@ class ResultsPage extends StatelessWidget {
     final calories = calculator.getEstimatedDailyCalories();
     final water = calculator.getWaterIntake();
     final weightDelta = calculator.getWeightDelta();
+    final dietRec = DietRecommendation.getForBMI(bmiVal);
 
     return Scaffold(
       backgroundColor: DynamicColors.bg(context),
@@ -323,6 +325,241 @@ class ResultsPage extends StatelessWidget {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: kSpaceMD),
+
+                  // ── Health Warning (if applicable) ────────────────────────
+                  if ((calculator.getHealthWarning() ?? '').isNotEmpty)
+                    _SectionCard(
+                      isDark: isDark,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: kErrorColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(kRadiusSM),
+                                ),
+                                child: const Icon(Icons.warning_outlined, color: kErrorColor, size: 18),
+                              ),
+                              const SizedBox(width: kSpaceMD),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Health Consideration',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                        color: DynamicColors.textPrimary(context),
+                                      ),
+                                    ),
+                                    const SizedBox(height: kSpaceXS),
+                                    Text(
+                                      calculator.getHealthWarning() ?? '',
+                                      style: TextStyle(
+                                        color: DynamicColors.textSecondary(context),
+                                        fontSize: 13,
+                                        height: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  if ((calculator.getHealthWarning() ?? '').isNotEmpty)
+                    const SizedBox(height: kSpaceMD),
+
+                  // ── Diet Recommendations ──────────────────────────────────
+                  _SectionCard(
+                    isDark: isDark,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _CardTitle(
+                          context: context,
+                          icon: Icons.restaurant_outlined,
+                          iconColor: kWarningColor,
+                          title: 'Nutrition Recommendations',
+                        ),
+                        const SizedBox(height: kSpaceMD),
+                        Text(
+                          dietRec.title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                            color: DynamicColors.textPrimary(context),
+                          ),
+                        ),
+                        const SizedBox(height: kSpaceXS),
+                        Text(
+                          dietRec.description,
+                          style: TextStyle(
+                            color: DynamicColors.textSecondary(context),
+                            fontSize: 13,
+                            height: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: kSpaceMD),
+                        // Meal frequency
+                        Container(
+                          padding: const EdgeInsets.all(kSpaceSM),
+                          decoration: BoxDecoration(
+                            color: kWarningColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(kRadiusSM),
+                            border: Border.all(color: kWarningColor.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Daily Meal Plan',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  color: DynamicColors.textPrimary(context),
+                                ),
+                              ),
+                              const SizedBox(height: kSpaceXS),
+                              ...dietRec.mealsPerDay.map((meal) =>
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                                    child: Text(
+                                      '• $meal',
+                                      style: TextStyle(
+                                        color: DynamicColors.textSecondary(context),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  )),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: kSpaceMD),
+                        // Macro balance
+                        Container(
+                          padding: const EdgeInsets.all(kSpaceSM),
+                          decoration: BoxDecoration(
+                            color: kInfoColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(kRadiusSM),
+                            border: Border.all(color: kInfoColor.withOpacity(0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Macronutrient Balance',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 12,
+                                  color: DynamicColors.textPrimary(context),
+                                ),
+                              ),
+                              const SizedBox(height: kSpaceXS),
+                              Text(
+                                dietRec.macroBalance,
+                                style: TextStyle(
+                                  color: DynamicColors.textSecondary(context),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: kSpaceMD),
+                        // Food groups
+                        Text(
+                          'Focus Foods',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            color: DynamicColors.textPrimary(context),
+                          ),
+                        ),
+                        const SizedBox(height: kSpaceXS),
+                        Wrap(
+                          spacing: kSpaceSM,
+                          runSpacing: kSpaceXS,
+                          children: dietRec.foodGroups.map((food) =>
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: kSpaceSM, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: kAccent.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(kRadiusSM),
+                                  border: Border.all(
+                                      color: kAccent.withOpacity(0.3)),
+                                ),
+                                child: Text(
+                                  food,
+                                  style: TextStyle(
+                                    color: kAccent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )).toList(),
+                        ),
+                        const SizedBox(height: kSpaceMD),
+                        // Key recommendations
+                        Text(
+                          'Key Recommendations',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            color: DynamicColors.textPrimary(context),
+                          ),
+                        ),
+                        const SizedBox(height: kSpaceXS),
+                        ...dietRec.recommendations
+                            .take(5) // Show top 5 recommendations
+                            .map((rec) => Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '✓ ',
+                                        style: TextStyle(
+                                          color: kSuccessColor,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          rec,
+                                          style: TextStyle(
+                                            color: DynamicColors.textSecondary(context),
+                                            fontSize: 11,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )),
+                        if (dietRec.recommendations.length > 5)
+                          Padding(
+                            padding: const EdgeInsets.only(top: kSpaceXS),
+                            child: Text(
+                              '... and ${dietRec.recommendations.length - 5} more recommendations',
+                              style: TextStyle(
+                                color: DynamicColors.textSecondary(context),
+                                fontSize: 11,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: kSpaceMD),
 

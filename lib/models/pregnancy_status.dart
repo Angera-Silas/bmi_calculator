@@ -95,3 +95,4 @@ extension PregnancyStatusExtension on PregnancyStatus {
     if (bmi < 30) return 'overweight';
     return 'obese';
   }
+}
