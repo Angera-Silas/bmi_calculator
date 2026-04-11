@@ -1,18 +1,19 @@
-import 'package:bmi_calculator/calculator_brain.dart';
-import 'package:bmi_calculator/components/bottom_button.dart';
-import 'package:bmi_calculator/components/icon_content.dart';
-import 'package:bmi_calculator/components/reusable_card.dart';
-import 'package:bmi_calculator/components/round_button.dart';
-import 'package:bmi_calculator/constants.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:uuid/uuid.dart';
+import '../calculator_brain.dart';
+import '../constants.dart';
+import '../models/bmi_record.dart';
+import '../models/user_profile.dart';
+import '../models/health_condition.dart';
+import '../models/pregnancy_status.dart';
+import '../database/app_database.dart';
+import '../services/session_service.dart';
+import '../services/sync_service.dart';
+import '../services/connectivity_service.dart';
+import 'results_page.dart';
 
-enum Gender {
-  male,
-  female,
-}
+enum Gender { male, female }
 
 class InputHome extends StatefulWidget {
   const InputHome({super.key});
@@ -22,329 +23,716 @@ class InputHome extends StatefulWidget {
 }
 
 class _InputHomeState extends State<InputHome> {
-  Gender? selectedGender;
-  int height = 180;
-  int weight = 60;
-  int age = 15;
+  Gender? _selectedGender;
+  bool _isMetric = true; // true=cm/kg, false=ft/lbs
 
-  // Function to save the calculation to Firestore
-  Future<void> saveCalculationToFirestore(
-      String bmiResult, String resultText, String interpretation) async {
-    User? user = FirebaseAuth.instance.currentUser;
+  // Metric values
+  int _heightCm = 170;
+  int _weightKg = 70;
+  int _age = 25;
+  
+  // New health fields
+  List<HealthCondition> _selectedConditions = [];
+  PregnancyStatus _pregnancyStatus = PregnancyStatus.notApplicable;
+  double? _prePregnancyWeight;
 
-    if (user != null) {
-      // Get current timestamp
-      Timestamp timestamp = Timestamp.now();
+  bool _isSaving = false;
 
-      // Reference to the Firestore collection
-      CollectionReference historyCollection =
-          FirebaseFirestore.instance.collection('history');
+  // Imperial helpers
+  double get _heightFt => _heightCm / 30.48;
+  double get _weightLbs => _weightKg * 2.20462;
 
-      // Add a new document to the history collection
-      await historyCollection.add({
-        'userId': user.uid,
-        'height': height,
-        'weight': weight,
-        'age': age,
-        'bmiResult': bmiResult,
-        'resultText': resultText,
-        'interpretation': interpretation,
-        'timestamp': timestamp,
-      });
-
-      print("Calculation saved to Firestore");
-    } else {
-      print("No user is logged in");
+  // Live BMI preview
+  String get _liveBMI {
+    if (_heightCm <= 0 || _weightKg <= 0) return '--';
+    try {
+      final calc = CalculatorBrain(height: _heightCm, weight: _weightKg, age: _age);
+      return calc.calculateBMI();
+    } catch (_) {
+      return '--';
     }
+  }
+
+  Color get _liveBMIColor {
+    final v = double.tryParse(_liveBMI);
+    if (v == null) return DynamicColors.textSecondary(context);
+    return getBMIColor(v);
+  }
+
+  Future<void> _calculate() async {
+    if (_selectedGender == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Please select your gender to continue'),
+          backgroundColor: kWarningColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+        ),
+      );
+      return;
+    }
+
+    // Build UserProfile with health context
+    final userProfile = UserProfile(
+      age: _age,
+      isMale: _selectedGender == Gender.male,
+      healthConditions: _selectedConditions,
+      pregnancyStatus: _pregnancyStatus,
+      prePregnancyWeight: _prePregnancyWeight,
+    );
+
+    final calc = CalculatorBrain.withProfile(
+      height: _heightCm,
+      weight: _weightKg,
+      userProfile: userProfile,
+    );
+
+    final userId = SessionService.userId;
+    if (userId == null) {
+      // Should not happen - splash screen handles this, but safety check
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please sign in to save your calculation'),
+          backgroundColor: kErrorColor,
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    // Create local record with new health fields
+    final record = BmiRecord(
+      id: const Uuid().v4(),
+      userId: userId,
+      height: _heightCm,
+      weight: _weightKg,
+      age: _age,
+      isMale: _selectedGender == Gender.male,
+      bmiValue: calc.bmiValue,
+      bmiResult: calc.calculateBMI(),
+      resultText: calc.getResult(),
+      interpretation: calc.getInterpretation(),
+      timestamp: DateTime.now(),
+      isSynced: false,
+      healthConditions: _selectedConditions.map((c) => c.name).toList(),
+      pregnancyStatus: _pregnancyStatus.name,
+      prePregnancyWeight: _prePregnancyWeight,
+    );
+
+    await AppDatabase.insertRecord(record);
+
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+
+    // Attempt background sync if online (fire-and-forget before context use)
+    if (userId != SessionService.guestId) {
+      ConnectivityService.isOnline.then((online) {
+        if (online) SyncService.sync(userId);
+      });
+    }
+
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResultsPage(
+          bmiResult: calc.calculateBMI(),
+          resultText: calc.getResult(),
+          interpretation: calc.getInterpretation(),
+          calculator: calc,
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const SizedBox.square(
-            dimension: 10.0,
-          ),
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 15.0),
-            child: const Text(
-              "Please Select your gender",
-              style: TextStyle(
-                fontSize: 16.0,
-                fontWeight: FontWeight.w500,
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(kSpaceMD, kSpaceMD, kSpaceMD, 100),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ── Live BMI Preview Bar ──────────────────────────────────────
+              _buildLiveBMIBar(),
+
+              const SizedBox(height: kSpaceMD),
+
+              // ── Unit Toggle ───────────────────────────────────────────────
+              _UnitToggle(
+                isMetric: _isMetric,
+                onToggle: (v) => setState(() => _isMetric = v),
               ),
-              textAlign: TextAlign.left,
-            ),
-          ),
-          const SizedBox.square(
-            dimension: 5.0,
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: ReusableCard(
-                    onPress: () {
-                      setState(() {
-                        selectedGender = Gender.male;
-                      });
-                    },
-                    colour: selectedGender == Gender.male
-                        ? DynamicColors.activeCardColor(context)
-                        : DynamicColors.inactiveCardColor(context),
-                    cardChild: const IconContent(
-                      label: "MALE",
-                      icon: FontAwesomeIcons.mars,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ReusableCard(
-                    onPress: () {
-                      setState(() {
-                        selectedGender = Gender.female;
-                      });
-                    },
-                    colour: selectedGender == Gender.female
-                        ? DynamicColors.activeCardColor(context)
-                        : DynamicColors.inactiveCardColor(context),
-                    cardChild: const IconContent(
-                      icon: FontAwesomeIcons.venus,
-                      label: "FEMALE",
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox.square(
-            dimension: 5.0,
-          ),
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 15.0),
-            child: const Text(
-              "How high are you?",
-              style: TextStyle(
-                fontSize: 16.0,
-              ),
-              textAlign: TextAlign.left,
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 1.0, horizontal: 15.0),
-            child: const Text(
-              "Please select your height on the slider below",
-              style: TextStyle(
-                fontSize: 16.0,
-              ),
-            ),
-          ),
-          const SizedBox.square(
-            dimension: 5.0,
-          ),
-          Expanded(
-            child: ReusableCard(
-              colour: DynamicColors.primaryCardColor(context),
-              cardChild: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              const SizedBox(height: kSpaceMD),
+
+              // ── Gender ────────────────────────────────────────────────────
+              _SectionLabel(label: 'Biological sex'),
+              const SizedBox(height: kSpaceSM),
+              Row(
                 children: [
-                  Text(
-                    "HEIGHT",
-                    style: TextStyle(
-                      fontSize: 18.0,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  _GenderCard(
+                    label: 'Male',
+                    icon: FontAwesomeIcons.mars,
+                    selected: _selectedGender == Gender.male,
+                    onTap: () => setState(() => _selectedGender = Gender.male),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(height.toString(), style: kNumberTextStyle),
-                      Text(
-                        "cm",
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.w600,
+                  const SizedBox(width: kSpaceSM),
+                  _GenderCard(
+                    label: 'Female',
+                    icon: FontAwesomeIcons.venus,
+                    selected: _selectedGender == Gender.female,
+                    onTap: () => setState(() => _selectedGender = Gender.female),
+                  ),
+                ],
+              ),
+              const SizedBox(height: kSpaceMD),
+
+              // ── Height ────────────────────────────────────────────────────
+              _SectionLabel(label: 'Height'),
+              const SizedBox(height: kSpaceSM),
+              _MetricCard(
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          _isMetric ? '$_heightCm' : _heightFt.toStringAsFixed(1),
+                          style: kNumberTextStyle.copyWith(color: DynamicColors.textPrimary(context)),
                         ),
-                      ),
-                    ],
-                  ),
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      thumbShape:
-                          const RoundSliderThumbShape(enabledThumbRadius: 15.0),
-                      overlayShape:
-                          const RoundSliderOverlayShape(overlayRadius: 30.0),
-                      thumbColor: const Color(0xFF000000),
-                      activeTrackColor: const Color(0xFFEB1555),
-                      inactiveTrackColor: const Color(0xFF8D8E98),
-                      overlayColor: const Color(0x29EB1555),
+                        const SizedBox(width: 4),
+                        Text(
+                          _isMetric ? 'cm' : 'ft',
+                          style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                      ],
                     ),
-                    child: Slider(
-                      value: height.toDouble(),
-                      min: 100.0,
-                      max: 300.0,
-                      onChanged: (double newValue) {
-                        setState(() {
-                          height = newValue.round();
-                        });
-                      },
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12.0),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 22.0),
+                        thumbColor: kAccent,
+                        activeTrackColor: kAccent,
+                        inactiveTrackColor: DynamicColors.border(context),
+                        overlayColor: kAccent.withOpacity(0.2),
+                        trackHeight: 4,
+                      ),
+                      child: Slider(
+                        value: _heightCm.toDouble(),
+                        min: 100.0,
+                        max: 250.0,
+                        onChanged: (v) => setState(() => _heightCm = v.round()),
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('100 cm', style: TextStyle(fontSize: 11, color: DynamicColors.textSecondary(context))),
+                        Text('250 cm', style: TextStyle(fontSize: 11, color: DynamicColors.textSecondary(context))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: kSpaceMD),
+
+              // ── Weight & Age ──────────────────────────────────────────────
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SectionLabel(label: 'Weight'),
+                        const SizedBox(height: kSpaceSM),
+                        _MetricCard(
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    _isMetric ? '$_weightKg' : _weightLbs.toStringAsFixed(0),
+                                    style: kNumberTextStyle.copyWith(
+                                      fontSize: 40,
+                                      color: DynamicColors.textPrimary(context),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    _isMetric ? 'kg' : 'lbs',
+                                    style: TextStyle(
+                                      color: DynamicColors.textSecondary(context),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: kSpaceSM),
+                              _IncrementRow(
+                                onDecrement: () => setState(() {
+                                  if (_weightKg > 20) _weightKg--;
+                                }),
+                                onIncrement: () => setState(() {
+                                  if (_weightKg < 300) _weightKg++;
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: kSpaceSM),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _SectionLabel(label: 'Age'),
+                        const SizedBox(height: kSpaceSM),
+                        _MetricCard(
+                          child: Column(
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    '$_age',
+                                    style: kNumberTextStyle.copyWith(
+                                      fontSize: 40,
+                                      color: DynamicColors.textPrimary(context),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'yrs',
+                                    style: TextStyle(
+                                      color: DynamicColors.textSecondary(context),
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: kSpaceSM),
+                              _IncrementRow(
+                                onDecrement: () => setState(() {
+                                  if (_age > 2) _age--;
+                                }),
+                                onIncrement: () => setState(() {
+                                  if (_age < 120) _age++;
+                                }),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
+              const SizedBox(height: kSpaceMD),
+
+              // ── Health Conditions ────────────────────────────────────────────
+              _SectionLabel(label: 'Health Conditions (Optional)'),
+              const SizedBox(height: kSpaceSM),
+              _buildHealthConditionsSection(),
+              const SizedBox(height: kSpaceMD),
+
+              // ── Pregnancy Status (Female Only) ────────────────────────────
+              if (_selectedGender == Gender.female)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _SectionLabel(label: 'Pregnancy Status (Optional)'),
+                    const SizedBox(height: kSpaceSM),
+                    _buildPregnancySection(),
+                    const SizedBox(height: kSpaceMD),
+                  ],
+                ),
+            ],
+          ),
+        ),
+
+        // ── Fixed Calculate Button ────────────────────────────────────────
+        Positioned(
+          bottom: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(kSpaceMD, kSpaceSM, kSpaceMD, kSpaceMD),
+            decoration: BoxDecoration(
+              color: DynamicColors.bg(context),
+              border: Border(top: BorderSide(color: DynamicColors.border(context))),
+            ),
+            child: SizedBox(
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _isSaving ? null : _calculate,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: kAccent,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: kAccent.withOpacity(0.6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMD)),
+                  elevation: 0,
+                ),
+                child: _isSaving
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                      )
+                    : const Text('Calculate BMI', style: kLargeButtonTextStyle),
+              ),
             ),
           ),
-          Expanded(
-            child: Row(
-              children: [
-                Expanded(
-                  child: ReusableCard(
-                    colour: DynamicColors.inactiveCardColor(context),
-                    cardChild: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "WEIGHT",
-                          style: labelStyle(context),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            RoundIconButton(
-                              icon: FontAwesomeIcons.minus,
-                              onPressed: () {
-                                setState(() {
-                                  weight--;
-                                });
-                              },
-                            ),
-                            SizedBox.square(
-                              dimension: 50,
-                              child: Center(
-                                child: Text(
-                                  weight.toString(),
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            RoundIconButton(
-                              icon: FontAwesomeIcons.plus,
-                              onPressed: () {
-                                setState(() {
-                                  weight++;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                        Text(
-                          "kgs",
-                          style: TextStyle(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: ReusableCard(
-                    colour: DynamicColors.inactiveCardColor(context),
-                    cardChild: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          "AGE",
-                          style: labelStyle(context),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            RoundIconButton(
-                              icon: FontAwesomeIcons.minus,
-                              onPressed: () {
-                                setState(() {
-                                  age--;
-                                });
-                              },
-                            ),
-                            SizedBox.square(
-                              dimension: 50,
-                              child: Center(
-                                child: Text(
-                                  age.toString(),
-                                  style: TextStyle(
-                                    fontSize: 40,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            RoundIconButton(
-                              icon: FontAwesomeIcons.plus,
-                              onPressed: () {
-                                setState(() {
-                                  age++;
-                                });
-                              },
-                            ),
-                          ],
-                        ),
-                        Text(
-                          "yrs",
-                          style: TextStyle(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLiveBMIBar() {
+    final bmi = _liveBMI;
+    final color = _liveBMIColor;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: kSpaceSM),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(kRadiusMD),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.monitor_heart_outlined, color: color, size: 18),
+          const SizedBox(width: kSpaceSM),
+          Text(
+            'Live BMI Preview',
+            style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 13),
+          ),
+          const Spacer(),
+          Text(
+            bmi,
+            style: TextStyle(
+              color: color,
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(
-            height: 10.0,
-          ),
-          BottomButton(
-            buttonTitle: "CALCULATE",
-            onTap: () {
-              CalculatorBrain calc =
-                  CalculatorBrain(height: height, weight: weight);
-
-              saveCalculationToFirestore(calc.calculateBMI(), calc.getResult(),
-                  calc.getInterpretation());
-
-              Navigator.pushNamed(
-                context,
-                '/results',
-                arguments: {
-                  'bmiResult': calc.calculateBMI(),
-                  'resultText': calc.getResult(),
-                  'interpretation': calc.getInterpretation(),
-                },
-              );
-              // Navigator.push(context, MaterialPageRoute(builder: (context) {
-              //   return ResultsPage(
-              //     bmiResult: calc.calculateBMI(),
-              //     resultText: calc.getResult(),
-              //     interpretation: calc.getInterpretation(),
-              //   );
-            },
+          const SizedBox(width: 6),
+          Text(
+            bmi == '--' ? '' : _getShortCategory(double.tryParse(bmi) ?? 0),
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
+      ),
+    );
+  }
+
+  String _getShortCategory(double bmi) {
+    if (bmi < 18.5) return '· Underweight';
+    if (bmi < 25) return '· Normal';
+    if (bmi < 30) return '· Overweight';
+    return '· Obese';
+  }
+
+  Widget _buildHealthConditionsSection() {
+    return _MetricCard(
+      child: Wrap(
+        spacing: kSpaceSM,
+        runSpacing: kSpaceSM,
+        children: HealthCondition.values.map((condition) {
+          final isSelected = _selectedConditions.contains(condition);
+          return FilterChip(
+            label: Text(condition.shortLabel),
+            selected: isSelected,
+            onSelected: (selected) {
+              setState(() {
+                if (selected) {
+                  _selectedConditions.add(condition);
+                } else {
+                  _selectedConditions.remove(condition);
+                }
+              });
+            },
+            backgroundColor: DynamicColors.card(context),
+            selectedColor: kAccent.withOpacity(0.2),
+            labelStyle: TextStyle(
+              color: isSelected ? kAccent : DynamicColors.textPrimary(context),
+              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPregnancySection() {
+    return _MetricCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DropdownButton<PregnancyStatus>(
+            value: _pregnancyStatus,
+            isExpanded: true,
+            underline: const SizedBox(),
+            items: PregnancyStatus.values.map((status) {
+              return DropdownMenuItem(
+                value: status,
+                child: Text(status.label),
+              );
+            }).toList(),
+            onChanged: (newStatus) {
+              setState(() {
+                _pregnancyStatus = newStatus ?? PregnancyStatus.notApplicable;
+              });
+            },
+          ),
+          if (_pregnancyStatus != PregnancyStatus.notApplicable)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: kSpaceSM),
+                Container(
+                  padding: const EdgeInsets.all(kSpaceSM),
+                  decoration: BoxDecoration(
+                    color: kAccent.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(kRadiusSM),
+                    border: Border.all(color: kAccent.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    _pregnancyStatus.guidance,
+                    style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+                  ),
+                ),
+                if (_pregnancyStatus != PregnancyStatus.postpartum)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: kSpaceSM),
+                      Text(
+                        'Pre-pregnancy weight (optional)',
+                        style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+                      ),
+                      const SizedBox(height: kSpaceSM),
+                      TextField(
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        onChanged: (value) {
+                          setState(() {
+                            _prePregnancyWeight = double.tryParse(value);
+                          });
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Weight in ${_isMetric ? 'kg' : 'lbs'}',
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: kSpaceSM, vertical: kSpaceSM),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Sub-widgets ─────────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) => Text(
+        label,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: DynamicColors.textSecondary(context),
+          letterSpacing: 0.5,
+        ),
+      );
+}
+
+class _MetricCard extends StatelessWidget {
+  final Widget child;
+  const _MetricCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(kSpaceMD),
+        decoration: BoxDecoration(
+          color: DynamicColors.card(context),
+          borderRadius: BorderRadius.circular(kRadiusMD),
+          border: Border.all(color: DynamicColors.border(context)),
+        ),
+        child: child,
+      );
+}
+
+class _GenderCard extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _GenderCard({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: kSpaceMD),
+          decoration: BoxDecoration(
+            color: selected ? kAccent.withOpacity(0.15) : DynamicColors.card(context),
+            borderRadius: BorderRadius.circular(kRadiusMD),
+            border: Border.all(
+              color: selected ? kAccent : DynamicColors.border(context),
+              width: selected ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: selected ? kAccent : DynamicColors.iconColor(context),
+                size: 28,
+              ),
+              const SizedBox(height: kSpaceXS),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? kAccent : DynamicColors.textSecondary(context),
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  fontSize: 14,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnitToggle extends StatelessWidget {
+  final bool isMetric;
+  final ValueChanged<bool> onToggle;
+
+  const _UnitToggle({required this.isMetric, required this.onToggle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: DynamicColors.card(context),
+        borderRadius: BorderRadius.circular(kRadiusMD),
+        border: Border.all(color: DynamicColors.border(context)),
+      ),
+      child: Row(
+        children: [
+          _Tab(label: 'Metric (cm/kg)', active: isMetric, onTap: () => onToggle(true)),
+          _Tab(label: 'Imperial (ft/lbs)', active: !isMetric, onTap: () => onToggle(false)),
+        ],
+      ),
+    );
+  }
+}
+
+class _Tab extends StatelessWidget {
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  const _Tab({required this.label, required this.active, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: active ? kAccent : Colors.transparent,
+            borderRadius: BorderRadius.circular(kRadiusSM),
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: active ? Colors.white : DynamicColors.textSecondary(context),
+              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _IncrementRow extends StatelessWidget {
+  final VoidCallback onDecrement;
+  final VoidCallback onIncrement;
+
+  const _IncrementRow({required this.onDecrement, required this.onIncrement});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _CircleButton(icon: Icons.remove, onPressed: onDecrement),
+        const SizedBox(width: kSpaceMD),
+        _CircleButton(icon: Icons.add, onPressed: onIncrement),
+      ],
+    );
+  }
+}
+
+class _CircleButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  const _CircleButton({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: kAccent.withOpacity(0.15),
+          shape: BoxShape.circle,
+          border: Border.all(color: kAccent.withOpacity(0.3)),
+        ),
+        child: Icon(icon, color: kAccent, size: 20),
       ),
     );
   }

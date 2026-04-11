@@ -78,10 +78,20 @@ extension PregnancyStatusExtension on PregnancyStatus {
     };
   }
 
+  /// Guidance text for each pregnancy status.
+  String get guidance {
+    return switch (this) {
+      PregnancyStatus.notApplicable => 'Not pregnant or not applicable',
+      PregnancyStatus.firstTrimester => 'Weeks 0-13: Focus on prenatal care and nutrient intake',
+      PregnancyStatus.secondTrimester => 'Weeks 14-26: Most active period of weight gain',
+      PregnancyStatus.thirdTrimester => 'Weeks 27+: Final preparation period for delivery',
+      PregnancyStatus.postpartum => 'Within 1 year after delivery: Recovery and adjustments',
+    };
+  }
+
   String _getBmiCategory(double bmi) {
     if (bmi < 18.5) return 'underweight';
     if (bmi < 25) return 'normal';
     if (bmi < 30) return 'overweight';
     return 'obese';
   }
-}

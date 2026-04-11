@@ -22,9 +22,9 @@ android {
         applicationId = "com.angerasilas.bmi_calculator"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 3
+        versionCode = 6
         versionName = flutter.versionName
-        minSdkVersion 23
+        minSdkVersion flutter.minSdkVersion
     }
 
     signingConfigs {

@@ -40,4 +40,19 @@ extension HealthConditionExtension on HealthCondition {
       HealthCondition.asthma => 'Weight management can improve respiratory function',
     };
   }
+
+  /// Short label for UI chips/badges.
+  String get shortLabel {
+    return switch (this) {
+      HealthCondition.none => 'None',
+      HealthCondition.diabetes => 'Diabetes',
+      HealthCondition.hypertension => 'Hypertension',
+      HealthCondition.heartDisease => 'Heart Disease',
+      HealthCondition.metabolicSyndrome => 'Metabolic Syndrome',
+      HealthCondition.pcos => 'PCOS',
+      HealthCondition.thyroid => 'Thyroid',
+      HealthCondition.arthritis => 'Arthritis',
+      HealthCondition.asthma => 'Asthma',
+    };
+  }
 }

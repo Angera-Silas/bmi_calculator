@@ -1,7 +1,6 @@
-import 'package:animated_text_kit/animated_text_kit.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../constants.dart';
+import '../services/session_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -10,86 +9,111 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends State<SplashScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _fadeAnim;
+  late Animation<double> _scaleAnim;
+
   @override
   void initState() {
     super.initState();
-    checkLoginState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 1800),
+      vsync: this,
+    );
+
+    _fadeAnim = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _scaleAnim = Tween<double>(begin: 0.7, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+
+    _controller.forward();
+
+    // Check auth state after animation settles
+    Future.delayed(const Duration(milliseconds: 2000), _checkAuthState);
   }
 
-  Future<void> checkLoginState() async {
-    // Simulate splash screen delay
-    await Future.delayed(const Duration(seconds: 5));
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
-    // Check if a user is already signed in via Firebase Auth
-    User? currentUser = FirebaseAuth.instance.currentUser;
-
-    if (currentUser != null) {
-      // User is signed in, replace splash screen with HomePage
-      Navigator.pushReplacementNamed(context, '/input');
-      return;
-    }
-
-    // Check shared preferences
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool? isLoggedIn = prefs.getBool('isLoggedIn');
-
-    if (isLoggedIn == true) {
-      // Replace splash screen with HomePage
-      Navigator.pushReplacementNamed(context, '/input');
-    } else {
-      // Replace splash screen with LoginPage
-      Navigator.pushReplacementNamed(context, '/login');
-    }
+  Future<void> _checkAuthState() async {
+    if (!mounted) return;
+    await SessionService.initialize();
+    if (!mounted) return;
+    final hasSession = SessionService.hasSession;
+    Navigator.pushReplacementNamed(context, hasSession ? '/input' : '/login');
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.blue, Colors.lightBlueAccent],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      backgroundColor: DynamicColors.bg(context),
+      body: FadeTransition(
+        opacity: _fadeAnim,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Add a logo or illustration
-              Image.asset(
-                'images/logo.png',
-                height: 100,
-                width: 100,
-              ),
-              const SizedBox(height: 20),
-              AnimatedTextKit(
-                animatedTexts: [
-                  FadeAnimatedText(
-                    'Welcome to BMI Calculator',
-                    textStyle: const TextStyle(
-                      fontSize: 28.0,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontFamily: 'Source Sans Pro',
+              // Animated logo
+              ScaleTransition(
+                scale: _scaleAnim,
+                child: Container(
+                  width: 96,
+                  height: 96,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [kAccent, kAccentLight],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
+                    borderRadius: BorderRadius.circular(kRadiusLG),
+                    boxShadow: [
+                      BoxShadow(
+                        color: kAccent.withOpacity(0.4),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
                   ),
-                  FadeAnimatedText(
-                    'Track Your Health',
-                    textStyle: const TextStyle(
-                      fontSize: 20.0,
-                      color: Colors.white70,
-                      fontFamily: 'Source Sans Pro',
-                    ),
+                  child: const Icon(
+                    Icons.monitor_weight_outlined,
+                    color: Colors.white,
+                    size: 48,
                   ),
-                ],
-                totalRepeatCount: 1,
+                ),
               ),
-              const SizedBox(height: 40),
-              const CircularProgressIndicator(
-                color: Colors.white,
+              const SizedBox(height: kSpaceLG),
+              Text(
+                'BMI Calculator',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w800,
+                  color: DynamicColors.textPrimary(context),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              const SizedBox(height: kSpaceXS),
+              Text(
+                'Track · Understand · Improve',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: DynamicColors.textSecondary(context),
+                  letterSpacing: 1.0,
+                ),
+              ),
+              const SizedBox(height: kSpaceXXL),
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: kAccent,
+                  strokeWidth: 2.5,
+                ),
               ),
             ],
           ),

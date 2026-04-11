@@ -1,27 +1,38 @@
-import 'package:bmi_calculator/constants.dart';
 import 'package:flutter/material.dart';
+import '../constants.dart';
 
 class BottomButton extends StatelessWidget {
-  const BottomButton(
-      {super.key, required this.buttonTitle, required this.onTap});
+  const BottomButton({
+    super.key,
+    required this.buttonTitle,
+    required this.onTap,
+    this.isLoading = false,
+  });
 
-  final VoidCallback onTap;
   final String buttonTitle;
+  final VoidCallback onTap;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: isLoading ? null : onTap,
       child: Container(
-        color: DynamicColors.bottomContainerColor(context),
-        margin: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 24.0),
+        margin: const EdgeInsets.symmetric(vertical: kSpaceXS, horizontal: kSpaceMD),
         width: double.infinity,
         height: kBottomContainerHeight,
+        decoration: BoxDecoration(
+          color: isLoading ? kAccent.withOpacity(0.6) : kAccent,
+          borderRadius: BorderRadius.circular(kRadiusMD),
+        ),
         child: Center(
-          child: Text(
-            buttonTitle,
-            style: kLargeButtonTextStyle,
-          ),
+          child: isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                )
+              : Text(buttonTitle, style: kLargeButtonTextStyle),
         ),
       ),
     );
