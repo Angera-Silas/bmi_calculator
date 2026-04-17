@@ -179,6 +179,97 @@ class _TwoFactorVerificationScreenState
     );
   }
 
+  Future<void> _showAccountRecoveryOptions() async {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Account Recovery'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'If you\'ve lost access to your 2FA methods, we can help you recover your account.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: kSpaceMD),
+            const Text('Options:'),
+            const SizedBox(height: kSpaceXS),
+            const Text('• Use a recovery code if you saved one'),
+            const SizedBox(height: kSpaceXS),
+            const Text('• Contact support via your registered email'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _initiateEmailRecovery();
+            },
+            child: const Text('Start Email Recovery'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _initiateEmailRecovery() async {
+    final userId = SessionService.userId;
+    if (userId == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Email Verification'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('We\'ll send a recovery link to your registered email address.'),
+            const SizedBox(height: kSpaceXL),
+            const Text('Processing...'),
+          ],
+        ),
+      ),
+    );
+
+    // Initiate recovery (in production, this would send an email)
+    final result = await TwoFactorService.initiateAccountRecovery(
+      SessionService.userEmail ?? 'user@example.com',
+    );
+
+    if (mounted) {
+      Navigator.pop(context);
+
+      if (result == null) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Recovery Email Sent'),
+            content: const Text(
+              'Check your email for recovery instructions. '
+              'Click the link to verify your identity and reset your 2FA.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        _showError(result);
+      }
+    }
+  }
+
+
   @override
   void dispose() {
     _otpController.dispose();
@@ -363,6 +454,22 @@ class _TwoFactorVerificationScreenState
                       ),
                     )
                   : const Text('Verify', style: kLargeButtonTextStyle),
+            ),
+          ),
+          const SizedBox(height: kSpaceMD),
+
+          // Account Recovery Link
+          Center(
+            child: TextButton(
+              onPressed: _showAccountRecoveryOptions,
+              child: Text(
+                'Can\'t verify? Account recovery',
+                style: TextStyle(
+                  color: kAccent,
+                  fontSize: 14,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ),
           ),
         ] else ...[

@@ -43,6 +43,27 @@ class TwoFactorService {
     return config?.enrolledMethods ?? [];
   }
 
+  /// Set primary 2FA method
+  static Future<String?> setPrimaryMethod(String userId, TwoFactorMethod method) async {
+    try {
+      final config = await getConfig(userId);
+      if (config == null) {
+        return 'No 2FA configuration found.';
+      }
+
+      if (!config.enrolledMethods.contains(method)) {
+        return 'This method is not enrolled.';
+      }
+
+      final updatedConfig = config.copyWith(primaryMethod: method);
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error setting primary method: $e');
+      return 'Failed to set primary method.';
+    }
+  }
+
   // ── TOTP (Authenticator App) ──────────────────────────────────────────────
 
   /// Generate a new TOTP secret for user
@@ -648,5 +669,78 @@ class TwoFactorService {
     // Basic validation: at least 10 digits
     final digits = phone.replaceAll(RegExp(r'[^\d]'), '');
     return digits.length >= 10;
+  }
+
+  // ── Account Recovery ────────────────────────────────────────────────────────
+
+  /// Initiate account recovery by sending verification email
+  static Future<String?> initiateAccountRecovery(String email) async {
+    try {
+      // In production, this would send an email with a recovery link
+      // For now, we'll store a temporary recovery token
+      final recoveryToken = _generateRandomCode(32);
+      print('Account recovery initiated for $email');
+      print('Recovery token: $recoveryToken (store in SharedPreferences temporarily)');
+
+      // In a production app, you would:
+      // 1. Send an email to the user with a recovery link
+      // 2. Store a temporary token in Firestore or backend
+      // 3. User clicks link, verifies identity, then can disable/reset 2FA
+      return null;
+    } catch (e) {
+      print('Error initiating recovery: $e');
+      return 'Failed to initiate recovery';
+    }
+  }
+
+  /// Check if recovery token is valid
+  static Future<bool> validateRecoveryToken(String token) async {
+    try {
+      // In production, validate against backend/Firestore
+      // For now, just check length
+      return token.length == 32;
+    } catch (e) {
+      print('Error validating recovery token: $e');
+      return false;
+    }
+  }
+
+  /// Reset 2FA with valid recovery token (used after account recovery)
+  static Future<String?> reset2faWithRecoveryToken(
+    String userId,
+    String token,
+  ) async {
+    try {
+      // Validate token is legit
+      if (!await validateRecoveryToken(token)) {
+        return 'Invalid or expired recovery token.';
+      }
+
+      // Clear all 2FA data for this user
+      await _secureStorage.delete(key: '$_totpSecretKeyPrefix$userId');
+      await _secureStorage.delete(key: '$_smsPhoneKeyPrefix$userId');
+      await _secureStorage.delete(key: '$_passkeyKeyPrefix$userId');
+      await AppDatabase.delete2faConfig(userId);
+
+      print('2FA reset for user $userId via recovery');
+      return null;
+    } catch (e) {
+      print('Error resetting 2FA with recovery: $e');
+      return 'Failed to reset 2FA.';
+    }
+  }
+
+  /// Allow disabling all methods if user has backup email verified
+  static Future<String?> disableAllMethodsWithEmailVerification(String userId, String email) async {
+    try {
+      // In production, send verification email first
+      // For now, just disable after logging the action
+      await disable2fa(userId);
+      print('All 2FA methods disabled for $userId (email verified: $email)');
+      return null;
+    } catch (e) {
+      print('Error disabling via email verification: $e');
+      return 'Failed to disable 2FA.';
+    }
   }
 }

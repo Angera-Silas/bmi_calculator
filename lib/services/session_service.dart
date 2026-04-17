@@ -12,10 +12,12 @@ class SessionService {
   static const _keyUserId = 'ss_user_id';
   static const _keyIsGuest = 'ss_is_guest';
   static const _key2faVerified = 'ss_2fa_verified';
+  static const _keyUserEmail = 'ss_user_email';
 
   static String? _userId;
   static bool _isGuest = false;
   static bool _is2faVerified = false;
+  static String? _userEmail;
 
   // ── Accessors ──────────────────────────────────────────────────────────────
 
@@ -24,6 +26,7 @@ class SessionService {
   static bool get hasSession => _userId != null;
   static bool get isAuthenticated => _userId != null && !_isGuest;
   static bool get is2faVerified => _is2faVerified;
+  static String? get userEmail => _userEmail;
 
   /// Check if 2FA verification is required
   static bool get requires2fa => isAuthenticated && !_is2faVerified;
@@ -36,6 +39,7 @@ class SessionService {
     _userId = prefs.getString(_keyUserId);
     _isGuest = prefs.getBool(_keyIsGuest) ?? false;
     _is2faVerified = prefs.getBool(_key2faVerified) ?? false;
+    _userEmail = prefs.getString(_keyUserEmail);
 
     // If we had a registered session but Firebase Auth has no current user,
     // the token has expired — clear the stale session.
@@ -68,6 +72,7 @@ class SessionService {
   }) async {
     _userId = uid;
     _isGuest = false;
+    _userEmail = email;
     await _persist();
 
     await AppDatabase.upsertUser(
@@ -83,10 +88,12 @@ class SessionService {
   static Future<void> clear() async {
     _userId = null;
     _isGuest = false;
+    _userEmail = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyUserId);
     await prefs.remove(_keyIsGuest);
     await prefs.remove(_key2faVerified);
+    await prefs.remove(_keyUserEmail);
   }
 
   /// Mark 2FA as verified for current session
@@ -110,5 +117,8 @@ class SessionService {
     await prefs.setString(_keyUserId, _userId!);
     await prefs.setBool(_keyIsGuest, _isGuest);
     await prefs.setBool(_key2faVerified, _is2faVerified);
+    if (_userEmail != null) {
+      await prefs.setString(_keyUserEmail, _userEmail!);
+    }
   }
 }

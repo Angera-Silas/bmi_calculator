@@ -277,6 +277,27 @@ class _SecurityPageState extends State<SecurityPage> {
                             subtitle: isSelected ? const Text('Primary method') : null,
                             trailing: PopupMenuButton(
                               itemBuilder: (context) => [
+                                if (!isSelected && (_config?.enrolledMethods.length ?? 0) > 1)
+                                  PopupMenuItem(
+                                    child: const Text('Set as primary'),
+                                    onTap: () async {
+                                      final userId = SessionService.userId;
+                                      if (userId == null) return;
+                                      final result = await TwoFactorService.setPrimaryMethod(userId, method);
+                                      if (mounted) {
+                                        if (result == null) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text('${_getMethodName(method)} set as primary')),
+                                          );
+                                          _refreshConfig();
+                                        } else {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text(result)),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
                                 PopupMenuItem(
                                   child: const Text('Remove'),
                                   onTap: () => _removeMethod(method),
