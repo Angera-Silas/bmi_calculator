@@ -5,6 +5,8 @@ import 'services/auth_service.dart';
 import 'services/sync_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/session_service.dart';
+import 'services/two_factor_service.dart';
+import 'screens/two_factor_verification.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -50,6 +52,55 @@ class _LoginPageState extends State<LoginPage> {
         ),
       );
     } else {
+      // Check if 2FA is enabled
+      await _checkAndRoute2FA();
+    }
+  }
+
+  Future<void> _checkAndRoute2FA() async {
+    final userId = SessionService.userId;
+    if (userId == null) {
+      Navigator.pushReplacementNamed(context, '/input');
+      return;
+    }
+
+    // Check if 2FA is enabled for this user
+    final is2faEnabled = await TwoFactorService.isEnabled(userId);
+
+    if (!mounted) return;
+
+    if (is2faEnabled) {
+      // Get enabled methods
+      final methods = await TwoFactorService.getEnabledMethods(userId);
+
+      if (!mounted) return;
+
+      // Route to 2FA verification screen
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TwoFactorVerificationScreen(
+            enrolledMethods: methods,
+          ),
+        ),
+      );
+
+      if (result == true && mounted) {
+        // User successfully verified 2FA
+        Navigator.pushReplacementNamed(context, '/input');
+      } else if (mounted) {
+        // 2FA verification failed/cancelled
+        await AuthService.logout();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('2FA verification failed. Please try again.'),
+            backgroundColor: kErrorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } else {
+      // No 2FA required, go directly to input
       Navigator.pushReplacementNamed(context, '/input');
     }
   }
@@ -79,7 +130,8 @@ class _LoginPageState extends State<LoginPage> {
       if (isOnline && SessionService.userId != null) {
         await SyncService.sync(SessionService.userId!);
       }
-      Navigator.pushReplacementNamed(context, '/input');
+      // Check if 2FA is enabled
+      await _checkAndRoute2FA();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
