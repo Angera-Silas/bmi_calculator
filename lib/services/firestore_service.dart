@@ -82,4 +82,23 @@ class FirestoreService {
   static Future<void> deleteHistoryRecord(String docId) async {
     await _db.collection('history').doc(docId).delete();
   }
+
+  // ─── 2FA Configuration ──────────────────────────────────────────────────────
+
+  static Future<void> save2faConfig(String uid, Map<String, dynamic> config) async {
+    await _db.collection('users').doc(uid).collection('settings').doc('twofa').set({
+      ...config,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  static Future<Map<String, dynamic>?> get2faConfig(String uid) async {
+    final doc =
+        await _db.collection('users').doc(uid).collection('settings').doc('twofa').get();
+    return doc.exists ? doc.data() : null;
+  }
+
+  static Future<void> delete2faConfig(String uid) async {
+    await _db.collection('users').doc(uid).collection('settings').doc('twofa').delete();
+  }
 }

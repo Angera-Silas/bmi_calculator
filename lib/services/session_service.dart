@@ -11,9 +11,11 @@ class SessionService {
 
   static const _keyUserId = 'ss_user_id';
   static const _keyIsGuest = 'ss_is_guest';
+  static const _key2faVerified = 'ss_2fa_verified';
 
   static String? _userId;
   static bool _isGuest = false;
+  static bool _is2faVerified = false;
 
   // ── Accessors ──────────────────────────────────────────────────────────────
 
@@ -21,6 +23,10 @@ class SessionService {
   static bool get isGuest => _isGuest;
   static bool get hasSession => _userId != null;
   static bool get isAuthenticated => _userId != null && !_isGuest;
+  static bool get is2faVerified => _is2faVerified;
+
+  /// Check if 2FA verification is required
+  static bool get requires2fa => isAuthenticated && !_is2faVerified;
 
   // ── Initialization (called once at app startup) ────────────────────────────
 
@@ -29,6 +35,7 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
     _userId = prefs.getString(_keyUserId);
     _isGuest = prefs.getBool(_keyIsGuest) ?? false;
+    _is2faVerified = prefs.getBool(_key2faVerified) ?? false;
 
     // If we had a registered session but Firebase Auth has no current user,
     // the token has expired — clear the stale session.
@@ -79,6 +86,21 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyUserId);
     await prefs.remove(_keyIsGuest);
+    await prefs.remove(_key2faVerified);
+  }
+
+  /// Mark 2FA as verified for current session
+  static Future<void> verify2fa() async {
+    _is2faVerified = true;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key2faVerified, true);
+  }
+
+  /// Reset 2FA verification (for logout or session expiry)
+  static Future<void> _reset2fa() async {
+    _is2faVerified = false;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_key2faVerified);
   }
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -87,5 +109,6 @@ class SessionService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyUserId, _userId!);
     await prefs.setBool(_keyIsGuest, _isGuest);
+    await prefs.setBool(_key2faVerified, _is2faVerified);
   }
 }

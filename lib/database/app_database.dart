@@ -13,13 +13,15 @@ import '../models/bmi_record.dart';
 /// from Firestore in the background.
 class AppDatabase {
   static Database? _db;
-  static const int _schemaVersion = 2;
+  static const int _schemaVersion = 3;
   static const String _dbName = 'bmi_app.db';
 
   // ── Tables ─────────────────────────────────────────────────────────────────
   static const String _tableBmi = 'bmi_records';
   static const String _tableUsers = 'local_users';
   static const String _tableHealthSettings = 'health_settings';
+  static const String _table2faConfig = 'twofa_config';
+  static const String _table2faBackupCodes = 'twofa_backup_codes';
 
   // ── Singleton access ───────────────────────────────────────────────────────
   static Future<Database> get database async {
@@ -133,7 +135,46 @@ class AppDatabase {
         // Table may already exist
       }
     }
-    // if (from < 2) { await db.execute('ALTER TABLE ...'); }
+    
+    if (from < 3) {
+      // Create 2FA tables
+      try {
+        await db.execute('''
+          CREATE TABLE $_table2faConfig (
+            user_id                     TEXT    PRIMARY KEY,
+            is_enabled                  INTEGER NOT NULL DEFAULT 0,
+            enrolled_methods            TEXT,
+            primary_method              TEXT    NOT NULL DEFAULT 'email',
+            created_at                  TEXT,
+            last_updated_at             TEXT,
+            totp_secret_encrypted       TEXT,
+            sms_phone_encrypted         TEXT,
+            passkey_credential_encrypted TEXT,
+            recovery_codes_remaining    INTEGER NOT NULL DEFAULT 0
+          )
+        ''');
+      } catch (_) {
+        // Table may already exist
+      }
+
+      try {
+        await db.execute('''
+          CREATE TABLE $_table2faBackupCodes (
+            id            INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id       TEXT    NOT NULL,
+            code          TEXT    NOT NULL UNIQUE,
+            is_used       INTEGER NOT NULL DEFAULT 0,
+            used_at       TEXT,
+            FOREIGN KEY(user_id) REFERENCES $_tableUsers(id) ON DELETE CASCADE
+          )
+        ''');
+        await db.execute(
+            'CREATE INDEX idx_2fa_codes_user ON $_table2faBackupCodes(user_id)');
+      } catch (_) {
+        // Table may already exist
+      }
+    }
+    // if (from < 3) { await db.execute('ALTER TABLE ...'); }
   }
 
   // ── BMI Records ────────────────────────────────────────────────────────────
@@ -274,5 +315,86 @@ class AppDatabase {
     final db = await database;
     await db.delete(_tableBmi, where: 'user_id = ?', whereArgs: [userId]);
     await db.delete(_tableUsers, where: 'id = ?', whereArgs: [userId]);
+    await db.delete(_table2faConfig, where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete(_table2faBackupCodes, where: 'user_id = ?', whereArgs: [userId]);
+  }
+
+  // ── Two-Factor Authentication ──────────────────────────────────────────────
+
+  /// Get 2FA config for user; returns null if not configured.
+  static Future<Map<String, dynamic>?> get2faConfig(String userId) async {
+    final db = await database;
+    final rows = await db.query(
+      _table2faConfig,
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      limit: 1,
+    );
+    return rows.isNotEmpty ? rows.first : null;
+  }
+
+  /// Save or update 2FA config.
+  static Future<void> save2faConfig(Map<String, dynamic> config) async {
+    final db = await database;
+    await db.insert(
+      _table2faConfig,
+      config,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Delete 2FA config for user.
+  static Future<void> delete2faConfig(String userId) async {
+    final db = await database;
+    await db.delete(_table2faConfig, where: 'user_id = ?', whereArgs: [userId]);
+    await db.delete(_table2faBackupCodes, where: 'user_id = ?', whereArgs: [userId]);
+  }
+
+  /// Generate and save backup codes.
+  static Future<void> saveBackupCodes(String userId, List<String> codes) async {
+    final db = await database;
+    
+    // Delete old codes
+    await db.delete(_table2faBackupCodes, where: 'user_id = ?', whereArgs: [userId]);
+    
+    // Insert new codes
+    for (final code in codes) {
+      await db.insert(
+        _table2faBackupCodes,
+        {'user_id': userId, 'code': code, 'is_used': 0},
+      );
+    }
+  }
+
+  /// Get unused backup codes for user.
+  static Future<List<Map<String, dynamic>>> getUnusedBackupCodes(String userId) async {
+    final db = await database;
+    return await db.query(
+      _table2faBackupCodes,
+      where: 'user_id = ? AND is_used = 0',
+      whereArgs: [userId],
+    );
+  }
+
+  /// Mark backup code as used.
+  static Future<bool> useBackupCode(String userId, String code) async {
+    final db = await database;
+    final count = await db.update(
+      _table2faBackupCodes,
+      {'is_used': 1, 'used_at': DateTime.now().toIso8601String()},
+      where: 'user_id = ? AND code = ? AND is_used = 0',
+      whereArgs: [userId, code],
+    );
+    return count > 0;
+  }
+
+  /// Count remaining backup codes.
+  static Future<int> getBackupCodeCount(String userId) async {
+    final db = await database;
+    final result = await db.rawQuery(
+      'SELECT COUNT(*) as count FROM $_table2faBackupCodes WHERE user_id = ? AND is_used = 0',
+      [userId],
+    );
+    return (result.first['count'] as int?) ?? 0;
   }
 }

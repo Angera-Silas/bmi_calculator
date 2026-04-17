@@ -1,0 +1,466 @@
+import 'dart:convert';
+import 'dart:math';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:otp/otp.dart';
+import '../database/app_database.dart';
+import '../models/two_factor_config.dart';
+import 'session_service.dart';
+
+/// Manages 2FA enrollment, configuration, and verification
+class TwoFactorService {
+  static const String _totpSecretKeyPrefix = 'totp_secret_';
+  static const String _smsPhoneKeyPrefix = 'sms_phone_';
+  static const String _passkeyKeyPrefix = 'passkey_';
+
+  static final _secureStorage = FlutterSecureStorage();
+
+  /// Get user's 2FA configuration
+  static Future<TwoFactorConfig?> getConfig(String userId) async {
+    try {
+      final data = await AppDatabase.get2faConfig(userId);
+      if (data == null) return null;
+      return TwoFactorConfig.fromSqlite(data);
+    } catch (e) {
+      print('Error fetching 2FA config: $e');
+      return null;
+    }
+  }
+
+  /// Check if user has 2FA enabled
+  static Future<bool> isEnabled(String userId) async {
+    final config = await getConfig(userId);
+    return config?.isEnabled ?? false;
+  }
+
+  /// Get enabled 2FA methods for user
+  static Future<List<TwoFactorMethod>> getEnabledMethods(String userId) async {
+    final config = await getConfig(userId);
+    return config?.enrolledMethods ?? [];
+  }
+
+  // ── TOTP (Authenticator App) ──────────────────────────────────────────────
+
+  /// Generate a new TOTP secret for user
+  /// Returns QR code data URL for display
+  static Future<String> generateTotpSecret(String userId, String email) async {
+    // Generate random 32-byte secret
+    final random = Random.secure();
+    final values = List<int>.generate(32, (i) => random.nextInt(256));
+    final secret = base64Url.encode(values).replaceAll('=', '');
+
+    // Store securely
+    await _secureStorage.write(
+      key: '$_totpSecretKeyPrefix$userId',
+      value: secret,
+    );
+
+    // Generate QR code URL (for Google Authenticator, Microsoft Authenticator, etc.)
+    final appName = 'BMI%20Calculator';
+    final qrUrl =
+        'otpauth://totp/$appName:$email?secret=$secret&issuer=$appName&algorithm=SHA1&digits=6&period=30';
+
+    return qrUrl;
+  }
+
+  /// Verify a TOTP code
+  static Future<bool> verifyTotpCode(String userId, String code) async {
+    try {
+      final secret = await _secureStorage.read(key: '$_totpSecretKeyPrefix$userId');
+      if (secret == null) return false;
+
+      // Simple TOTP verification (6-digit code)
+      // Use OTP.generateTOTPCode to verify
+      try {
+        final generatedCode = OTP.generateTOTPCode(secret, DateTime.now().millisecondsSinceEpoch);
+        if (code == generatedCode) return true;
+
+        // Check window: ±1 time step (30 seconds each)
+        final previousCode = OTP.generateTOTPCode(
+          secret,
+          DateTime.now().subtract(Duration(seconds: 30)).millisecondsSinceEpoch,
+        );
+        if (code == previousCode) return true;
+
+        final nextCode = OTP.generateTOTPCode(
+          secret,
+          DateTime.now().add(Duration(seconds: 30)).millisecondsSinceEpoch,
+        );
+        if (code == nextCode) return true;
+
+        return false;
+      } catch (_) {
+        return false;
+      }
+    } catch (e) {
+      print('Error verifying TOTP: $e');
+      return false;
+    }
+  }
+
+  /// Enroll user in TOTP 2FA
+  static Future<String?> enrollTotp(String userId, String email) async {
+    try {
+      final config = await getConfig(userId) ??
+          TwoFactorConfig(
+            userId: userId,
+            enrolledMethods: [],
+            isEnabled: false,
+          );
+
+      // Generate new secret and get QR code URL
+      final qrUrl = await generateTotpSecret(userId, email);
+
+      // Generate and save backup codes
+      final codes = _generateBackupCodes();
+      await AppDatabase.saveBackupCodes(userId, codes);
+
+      // Update config: add TOTP to enrolled methods
+      final updatedConfig = config.copyWith(
+        enrolledMethods: [
+          ...config.enrolledMethods,
+          TwoFactorMethod.totp,
+        ]..toSet().toList(), // Remove duplicates
+        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.totp : config.primaryMethod,
+        recoveryCodesRemaining: codes.length,
+      );
+
+      // DON'T enable yet - user must verify the code first
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+
+      return qrUrl;
+    } catch (e) {
+      print('Error enrolling TOTP: $e');
+      return null;
+    }
+  }
+
+  /// Confirm TOTP enrollment (after user enters correct code)
+  static Future<String?> confirmTotpEnrollment(String userId, String totpCode) async {
+    try {
+      if (!await verifyTotpCode(userId, totpCode)) {
+        return 'Invalid authenticator code. Please try again.';
+      }
+
+      final config = await getConfig(userId);
+      if (config == null) {
+        return 'TOTP not enrolled.';
+      }
+
+      // Mark TOTP as verified, enable if first method
+      final shouldEnable = config.enrolledMethods.length == 1;
+      final updatedConfig = config.copyWith(
+        isEnabled: shouldEnable,
+        totpSecretEncrypted: 'verified', // Marker that secret is set
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+
+      // Return backup codes for user to save
+      final backupCodes = await AppDatabase.getUnusedBackupCodes(userId);
+      final codesToDisplay = backupCodes.map((c) => c['code'] as String).toList();
+      return 'TOTP_ENROLLED|||${codesToDisplay.join('|||')}';
+    } catch (e) {
+      print('Error confirming TOTP: $e');
+      return 'Failed to confirm TOTP enrollment.';
+    }
+  }
+
+  /// Remove TOTP from user's 2FA methods
+  static Future<String?> removeTotpMethod(String userId) async {
+    try {
+      await _secureStorage.delete(key: '$_totpSecretKeyPrefix$userId');
+
+      final config = await getConfig(userId);
+      if (config == null) return null;
+
+      final updatedMethods = config.enrolledMethods
+          .where((m) => m != TwoFactorMethod.totp)
+          .toList();
+
+      if (updatedMethods.isEmpty) {
+        await AppDatabase.delete2faConfig(userId);
+        return null;
+      }
+
+      final updatedConfig = config.copyWith(
+        enrolledMethods: updatedMethods,
+        primaryMethod: updatedMethods.first,
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error removing TOTP: $e');
+      return 'Failed to remove TOTP.';
+    }
+  }
+
+  // ── Email OTP ──────────────────────────────────────────────────────────────
+
+  /// Enroll email as 2FA method (always available, requires verification on login)
+  static Future<String?> enrollEmail(String userId) async {
+    try {
+      final config = await getConfig(userId) ??
+          TwoFactorConfig(
+            userId: userId,
+            enrolledMethods: [],
+            isEnabled: false,
+          );
+
+      // Email doesn't need pre-enrollment, just add to methods
+      final updatedConfig = config.copyWith(
+        enrolledMethods: [
+          ...config.enrolledMethods,
+          TwoFactorMethod.email,
+        ]..toSet().toList(),
+        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.email : config.primaryMethod,
+        isEnabled: true, // Enable immediately
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error enrolling email: $e');
+      return 'Failed to enroll email 2FA.';
+    }
+  }
+
+  /// Verify email OTP code
+  static Future<bool> verifyEmailOtp(String userId, String code) async {
+    // In production, this would validate against sent OTP
+    // For now, just check format (6 digits)
+    return RegExp(r'^\d{6}$').hasMatch(code);
+  }
+
+  /// Remove email from 2FA methods
+  static Future<String?> removeEmailMethod(String userId) async {
+    try {
+      final config = await getConfig(userId);
+      if (config == null) return null;
+
+      final updatedMethods = config.enrolledMethods
+          .where((m) => m != TwoFactorMethod.email)
+          .toList();
+
+      if (updatedMethods.isEmpty) {
+        await AppDatabase.delete2faConfig(userId);
+        return null;
+      }
+
+      final updatedConfig = config.copyWith(
+        enrolledMethods: updatedMethods,
+        primaryMethod: updatedMethods.first,
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error removing email: $e');
+      return 'Failed to remove email 2FA.';
+    }
+  }
+
+  // ── SMS OTP ────────────────────────────────────────────────────────────────
+
+  /// Enroll SMS as 2FA method
+  static Future<String?> enrollSms(String userId, String phoneNumber) async {
+    try {
+      // Validate phone format
+      if (!_isValidPhoneNumber(phoneNumber)) {
+        return 'Invalid phone number format.';
+      }
+
+      // Store phone securely
+      await _secureStorage.write(
+        key: '$_smsPhoneKeyPrefix$userId',
+        value: phoneNumber,
+      );
+
+      final config = await getConfig(userId) ??
+          TwoFactorConfig(
+            userId: userId,
+            enrolledMethods: [],
+            isEnabled: false,
+          );
+
+      final updatedConfig = config.copyWith(
+        enrolledMethods: [
+          ...config.enrolledMethods,
+          TwoFactorMethod.sms,
+        ]..toSet().toList(),
+        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.sms : config.primaryMethod,
+        smsPhoneEncrypted: 'stored',
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error enrolling SMS: $e');
+      return 'Failed to enroll SMS 2FA.';
+    }
+  }
+
+  /// Verify SMS OTP code
+  static Future<bool> verifySmSOtp(String userId, String code) async {
+    // In production, validate against sent SMS OTP
+    return RegExp(r'^\d{6}$').hasMatch(code);
+  }
+
+  /// Remove SMS from 2FA methods
+  static Future<String?> removeSmsMethod(String userId) async {
+    try {
+      await _secureStorage.delete(key: '$_smsPhoneKeyPrefix$userId');
+
+      final config = await getConfig(userId);
+      if (config == null) return null;
+
+      final updatedMethods = config.enrolledMethods
+          .where((m) => m != TwoFactorMethod.sms)
+          .toList();
+
+      if (updatedMethods.isEmpty) {
+        await AppDatabase.delete2faConfig(userId);
+        return null;
+      }
+
+      final updatedConfig = config.copyWith(
+        enrolledMethods: updatedMethods,
+        primaryMethod: updatedMethods.first,
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error removing SMS: $e');
+      return 'Failed to remove SMS 2FA.';
+    }
+  }
+
+  // ── Passkeys (WebAuthn) ────────────────────────────────────────────────────
+
+  /// Enroll passkey as 2FA method
+  static Future<String?> enrollPasskey(String userId) async {
+    try {
+      final config = await getConfig(userId) ??
+          TwoFactorConfig(
+            userId: userId,
+            enrolledMethods: [],
+            isEnabled: false,
+          );
+
+      // Passkey enrollment handled in platform-specific code
+      // Just update config here
+      final updatedConfig = config.copyWith(
+        enrolledMethods: [
+          ...config.enrolledMethods,
+          TwoFactorMethod.passkey,
+        ]..toSet().toList(),
+        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.passkey : config.primaryMethod,
+        passkeyCredentialEncrypted: 'enrolled', // Marker
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error enrolling passkey: $e');
+      return 'Failed to enroll passkey.';
+    }
+  }
+
+  /// Remove passkey from 2FA methods
+  static Future<String?> removePasskeyMethod(String userId) async {
+    try {
+      await _secureStorage.delete(key: '$_passkeyKeyPrefix$userId');
+
+      final config = await getConfig(userId);
+      if (config == null) return null;
+
+      final updatedMethods = config.enrolledMethods
+          .where((m) => m != TwoFactorMethod.passkey)
+          .toList();
+
+      if (updatedMethods.isEmpty) {
+        await AppDatabase.delete2faConfig(userId);
+        return null;
+      }
+
+      final updatedConfig = config.copyWith(
+        enrolledMethods: updatedMethods,
+        primaryMethod: updatedMethods.first,
+      );
+
+      await AppDatabase.save2faConfig(updatedConfig.toSqlite());
+      return null;
+    } catch (e) {
+      print('Error removing passkey: $e');
+      return 'Failed to remove passkey.';
+    }
+  }
+
+  // ── Recovery Codes ────────────────────────────────────────────────────────
+
+  /// Verify and use a recovery code
+  static Future<bool> verifyRecoveryCode(String userId, String code) async {
+    try {
+      return await AppDatabase.useBackupCode(userId, code.trim());
+    } catch (e) {
+      print('Error verifying recovery code: $e');
+      return false;
+    }
+  }
+
+  /// Regenerate backup codes
+  static Future<List<String>?> regenerateRecoveryCodes(String userId) async {
+    try {
+      final codes = _generateBackupCodes();
+      await AppDatabase.saveBackupCodes(userId, codes);
+
+      final config = await getConfig(userId);
+      if (config != null) {
+        final updated = config.copyWith(recoveryCodesRemaining: codes.length);
+        await AppDatabase.save2faConfig(updated.toSqlite());
+      }
+
+      return codes;
+    } catch (e) {
+      print('Error regenerating recovery codes: $e');
+      return null;
+    }
+  }
+
+  // ── Disable 2FA ─────────────────────────────────────────────────────────
+
+  /// Disable 2FA completely and clear all methods
+  static Future<String?> disable2fa(String userId) async {
+    try {
+      await _secureStorage.delete(key: '$_totpSecretKeyPrefix$userId');
+      await _secureStorage.delete(key: '$_smsPhoneKeyPrefix$userId');
+      await _secureStorage.delete(key: '$_passkeyKeyPrefix$userId');
+
+      await AppDatabase.delete2faConfig(userId);
+      return null;
+    } catch (e) {
+      print('Error disabling 2FA: $e');
+      return 'Failed to disable 2FA.';
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+
+  static List<String> _generateBackupCodes({int count = 10}) {
+    final random = Random.secure();
+    return List.generate(
+      count,
+      (_) => List.generate(
+        8,
+        (_) => random.nextInt(10),
+      ).join(),
+    );
+  }
+
+  static bool _isValidPhoneNumber(String phone) {
+    // Basic validation: at least 10 digits
+    final digits = phone.replaceAll(RegExp(r'[^\d]'), '');
+    return digits.length >= 10;
+  }
+}
