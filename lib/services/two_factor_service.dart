@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:otp/otp.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../database/app_database.dart';
 import '../models/two_factor_config.dart';
 import 'session_service.dart';
@@ -14,6 +15,7 @@ class TwoFactorService {
   static const String _smsPhoneKeyPrefix = 'sms_phone_';
   static const String _smsVerificationIdKeyPrefix = 'sms_verification_id_';
   static const String _passkeyKeyPrefix = 'passkey_';
+  static const String _deviceTrustKeyPrefix = 'device_trust_';
 
   static final _secureStorage = FlutterSecureStorage();
   static final _firebaseAuth = FirebaseAuth.instance;
@@ -741,6 +743,102 @@ class TwoFactorService {
     } catch (e) {
       print('Error disabling via email verification: $e');
       return 'Failed to disable 2FA.';
+    }
+  }
+
+  // ── Device Trust (30-day window) ─────────────────────────────────────────────
+
+  /// Mark this device as trusted for 30 days (skip 2FA)
+  static Future<String?> trustDeviceFor30Days(String userId, String deviceId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final trustedUntil = DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch;
+      final trustKey = '$_deviceTrustKeyPrefix$userId';
+
+      // Store device trust info: device ID and expiration timestamp
+      final trustData = {
+        'deviceId': deviceId,
+        'trustedUntil': trustedUntil,
+        'trustedAt': DateTime.now().toIso8601String(),
+      };
+
+      await prefs.setString(trustKey, jsonEncode(trustData));
+      print('Device $deviceId trusted for user $userId until ${DateTime.fromMillisecondsSinceEpoch(trustedUntil)}');
+      return null;
+    } catch (e) {
+      print('Error trusting device: $e');
+      return 'Failed to trust device.';
+    }
+  }
+
+  /// Check if device is currently trusted (still within 30 days)
+  static Future<bool> isDeviceTrusted(String userId, String deviceId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final trustKey = '$_deviceTrustKeyPrefix$userId';
+      final trustDataJson = prefs.getString(trustKey);
+
+      if (trustDataJson == null) return false;
+
+      final trustData = jsonDecode(trustDataJson) as Map<String, dynamic>;
+      final trustedDeviceId = trustData['deviceId'] as String?;
+      final trustedUntil = trustData['trustedUntil'] as int?;
+
+      if (trustedDeviceId != deviceId || trustedUntil == null) {
+        return false;
+      }
+
+      final isStillTrusted = DateTime.now().millisecondsSinceEpoch < trustedUntil;
+      if (!isStillTrusted) {
+        await removeTrustedDevice(userId);
+      }
+
+      return isStillTrusted;
+    } catch (e) {
+      print('Error checking device trust: $e');
+      return false;
+    }
+  }
+
+  /// Get remaining days for device trust
+  static Future<int> getRemainingTrustDays(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final trustKey = '$_deviceTrustKeyPrefix$userId';
+      final trustDataJson = prefs.getString(trustKey);
+
+      if (trustDataJson == null) return 0;
+
+      final trustData = jsonDecode(trustDataJson) as Map<String, dynamic>;
+      final trustedUntil = trustData['trustedUntil'] as int?;
+
+      if (trustedUntil == null) return 0;
+
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final remainingMs = trustedUntil - now;
+
+      if (remainingMs <= 0) {
+        await removeTrustedDevice(userId);
+        return 0;
+      }
+
+      return (remainingMs / (1000 * 60 * 60 * 24)).ceil();
+    } catch (e) {
+      print('Error getting remaining trust days: $e');
+      return 0;
+    }
+  }
+
+  /// Remove device trust
+  static Future<String?> removeTrustedDevice(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final trustKey = '$_deviceTrustKeyPrefix$userId';
+      await prefs.remove(trustKey);
+      return null;
+    } catch (e) {
+      print('Error removing device trust: $e');
+      return 'Failed to remove device trust.';
     }
   }
 }

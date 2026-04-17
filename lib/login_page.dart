@@ -70,6 +70,19 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return;
 
     if (is2faEnabled) {
+      // Generate device ID for device trust checking
+      final deviceId = '${DateTime.now().millisecondsSinceEpoch}_device';
+
+      // Check if this device is trusted
+      final isTrusted = await TwoFactorService.isDeviceTrusted(userId, deviceId);
+
+      if (isTrusted && mounted) {
+        // Device is trusted, skip 2FA and go directly to input
+        await SessionService.verify2fa();
+        Navigator.pushReplacementNamed(context, '/input');
+        return;
+      }
+
       // Get enabled methods
       final methods = await TwoFactorService.getEnabledMethods(userId);
 

@@ -25,14 +25,22 @@ class _TwoFactorVerificationScreenState
   final _otpController = TextEditingController();
   bool _isLoading = false;
   bool _showRecoveryCodeInput = false;
+  bool _trustDevice = false;
   int _attemptCount = 0;
   final int _maxAttempts = 5;
+  String _deviceId = '';
 
   @override
   void initState() {
     super.initState();
     _selectedMethod = widget.selectedMethod ?? widget.enrolledMethods.first;
+    _generateDeviceId();
     _initiateSmsIfNeeded();
+  }
+
+  void _generateDeviceId() {
+    // Generate a simple device identifier (in production, use device_info_plus)
+    _deviceId = '${DateTime.now().millisecondsSinceEpoch}_device';
   }
 
   Future<void> _initiateSmsIfNeeded() async {
@@ -99,6 +107,12 @@ class _TwoFactorVerificationScreenState
 
       if (isValid) {
         await SessionService.verify2fa();
+
+        // Trust device if user checked the box
+        if (_trustDevice) {
+          await TwoFactorService.trustDeviceFor30Days(userId, _deviceId);
+        }
+
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -454,6 +468,29 @@ class _TwoFactorVerificationScreenState
                       ),
                     )
                   : const Text('Verify', style: kLargeButtonTextStyle),
+            ),
+          ),
+          const SizedBox(height: kSpaceMD),
+
+          // Trust this device checkbox
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: kSpaceMD),
+            decoration: BoxDecoration(
+              color: DynamicColors.background(context, elevation: 1),
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              border: Border.all(
+                color: DynamicColors.border(context),
+              ),
+            ),
+            child: CheckboxListTile(
+              title: const Text('Trust this device for 30 days'),
+              subtitle: const Text('Skip 2FA on next login from this device'),
+              value: _trustDevice,
+              onChanged: (value) {
+                setState(() => _trustDevice = value ?? false);
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+              contentPadding: EdgeInsets.zero,
             ),
           ),
           const SizedBox(height: kSpaceMD),

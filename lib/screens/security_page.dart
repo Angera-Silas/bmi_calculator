@@ -209,6 +209,32 @@ class _SecurityPageState extends State<SecurityPage> {
     }
   }
 
+  Future<int> _getRemainingTrustDays() async {
+    final userId = SessionService.userId;
+    if (userId == null) return 0;
+    return await TwoFactorService.getRemainingTrustDays(userId);
+  }
+
+  Future<void> _removeTrust() async {
+    final userId = SessionService.userId;
+    if (userId == null) return;
+
+    final result = await TwoFactorService.removeTrustedDevice(userId);
+    if (mounted) {
+      if (result == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Device trust removed'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        setState(() {});
+      } else {
+        _showError(result);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -402,6 +428,42 @@ class _SecurityPageState extends State<SecurityPage> {
                         ),
                       ),
                     ),
+
+                  // Device Trust Status
+                  const SizedBox(height: 24),
+                  Text(
+                    'Device Trust',
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 12),
+                  FutureBuilder<int>(
+                    future: _getRemainingTrustDays(),
+                    builder: (context, snapshot) {
+                      final remainingDays = snapshot.data ?? 0;
+                      if (remainingDays > 0) {
+                        return Card(
+                          color: Colors.green[50],
+                          child: ListTile(
+                            leading: Icon(Icons.verified_user, color: Colors.green[700]),
+                            title: const Text('This device is trusted'),
+                            subtitle: Text('$remainingDays day(s) remaining'),
+                            trailing: TextButton(
+                              onPressed: _removeTrust,
+                              child: const Text('Remove'),
+                            ),
+                          ),
+                        );
+                      } else {
+                        return Card(
+                          child: ListTile(
+                            leading: Icon(Icons.laptop, color: Colors.grey[600]),
+                            title: const Text('This device is not trusted'),
+                            subtitle: const Text('Trust this device to skip 2FA on next login'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
 
                   if (_error != null) ...[
                     const SizedBox(height: 16),
