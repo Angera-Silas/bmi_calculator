@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:otp/otp.dart';
 import '../database/app_database.dart';
@@ -10,9 +11,11 @@ import 'session_service.dart';
 class TwoFactorService {
   static const String _totpSecretKeyPrefix = 'totp_secret_';
   static const String _smsPhoneKeyPrefix = 'sms_phone_';
+  static const String _smsVerificationIdKeyPrefix = 'sms_verification_id_';
   static const String _passkeyKeyPrefix = 'passkey_';
 
   static final _secureStorage = FlutterSecureStorage();
+  static final _firebaseAuth = FirebaseAuth.instance;
 
   /// Get user's 2FA configuration
   static Future<TwoFactorConfig?> getConfig(String userId) async {
@@ -262,15 +265,65 @@ class TwoFactorService {
 
   // ── SMS OTP ────────────────────────────────────────────────────────────────
 
-  /// Enroll SMS as 2FA method
-  static Future<String?> enrollSms(String userId, String phoneNumber) async {
+  /// Start SMS verification process for enrollment
+  /// Returns verification ID to be used when confirming OTP
+  static Future<String?> initiateSmsVerification(String phoneNumber) async {
     try {
-      // Validate phone format
+      if (!_isValidPhoneNumber(phoneNumber)) {
+        return null; // Error: invalid phone
+      }
+
+      String? verificationId;
+
+      await _firebaseAuth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: Duration(seconds: 120),
+        verificationCompleted: (PhoneAuthCredential credential) {
+          // Auto-resolve on some devices
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          print('Phone verification failed: ${e.message}');
+        },
+        codeSent: (String vId, int? resendToken) {
+          verificationId = vId;
+        },
+        codeAutoRetrievalTimeout: (String vId) {
+          verificationId = vId;
+        },
+      );
+
+      return verificationId;
+    } catch (e) {
+      print('Error initiating SMS verification: $e');
+      return null;
+    }
+  }
+
+  /// Confirm SMS enrollment with verification code and store phone
+  static Future<String?> confirmSmsEnrollment(
+    String userId,
+    String phoneNumber,
+    String verificationId,
+    String smsCode,
+  ) async {
+    try {
       if (!_isValidPhoneNumber(phoneNumber)) {
         return 'Invalid phone number format.';
       }
 
-      // Store phone securely
+      // Verify the code with Firebase
+      try {
+        final credential = PhoneAuthProvider.credential(
+          verificationId: verificationId,
+          smsCode: smsCode,
+        );
+        // Just verify it's valid; don't sign in
+        await _firebaseAuth.signInWithCredential(credential);
+      } on FirebaseAuthException catch (e) {
+        return 'Invalid verification code: ${e.message}';
+      }
+
+      // Phone verified, now store it
       await _secureStorage.write(
         key: '$_smsPhoneKeyPrefix$userId',
         value: phoneNumber,
@@ -289,21 +342,83 @@ class TwoFactorService {
           TwoFactorMethod.sms,
         ]..toSet().toList(),
         primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.sms : config.primaryMethod,
-        smsPhoneEncrypted: 'stored',
+        smsPhoneEncrypted: 'verified',
+        isEnabled: config.enrolledMethods.isEmpty, // Enable if first method
       );
 
       await AppDatabase.save2faConfig(updatedConfig.toSqlite());
       return null;
     } catch (e) {
-      print('Error enrolling SMS: $e');
-      return 'Failed to enroll SMS 2FA.';
+      print('Error confirming SMS enrollment: $e');
+      return 'Failed to confirm SMS enrollment.';
     }
   }
 
-  /// Verify SMS OTP code
-  static Future<bool> verifySmSOtp(String userId, String code) async {
-    // In production, validate against sent SMS OTP
-    return RegExp(r'^\d{6}$').hasMatch(code);
+  /// Start SMS OTP verification for login (send code)
+  /// Returns verification ID to be used with verifySmsOtp
+  static Future<String?> sendSmsOtp(String userId) async {
+    try {
+      final phoneNumber = await _secureStorage.read(key: '$_smsPhoneKeyPrefix$userId');
+      if (phoneNumber == null) {
+        return null; // Phone not registered
+      }
+
+      String? verificationId;
+
+      await _firebaseAuth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        timeout: Duration(seconds: 120),
+        verificationCompleted: (PhoneAuthCredential credential) {},
+        verificationFailed: (FirebaseAuthException e) {
+          print('SMS OTP failed: ${e.message}');
+        },
+        codeSent: (String vId, int? resendToken) {
+          verificationId = vId;
+        },
+        codeAutoRetrievalTimeout: (String vId) {
+          verificationId = vId;
+        },
+      );
+
+      // Store verification ID temporarily for this session
+      if (verificationId != null) {
+        await _secureStorage.write(
+          key: '$_smsVerificationIdKeyPrefix$userId',
+          value: verificationId,
+        );
+      }
+
+      return verificationId;
+    } catch (e) {
+      print('Error sending SMS OTP: $e');
+      return null;
+    }
+  }
+
+  /// Verify SMS OTP code during login
+  static Future<bool> verifySmsOtp(String userId, String code) async {
+    try {
+      final verificationId = await _secureStorage.read(key: '$_smsVerificationIdKeyPrefix$userId');
+      if (verificationId == null) {
+        return false;
+      }
+
+      try {
+        final credential = PhoneAuthProvider.credential(
+          verificationId: verificationId,
+          smsCode: code,
+        );
+        // Verify credential is valid
+        await _firebaseAuth.signInWithCredential(credential);
+        return true;
+      } on FirebaseAuthException catch (e) {
+        print('SMS OTP verification failed: ${e.message}');
+        return false;
+      }
+    } catch (e) {
+      print('Error verifying SMS OTP: $e');
+      return false;
+    }
   }
 
   /// Remove SMS from 2FA methods

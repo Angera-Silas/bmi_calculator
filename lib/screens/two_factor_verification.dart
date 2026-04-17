@@ -32,6 +32,24 @@ class _TwoFactorVerificationScreenState
   void initState() {
     super.initState();
     _selectedMethod = widget.selectedMethod ?? widget.enrolledMethods.first;
+    _initiateSmsIfNeeded();
+  }
+
+  Future<void> _initiateSmsIfNeeded() async {
+    if (_selectedMethod == TwoFactorMethod.sms) {
+      final userId = SessionService.userId;
+      if (userId != null) {
+        final verificationId = await TwoFactorService.sendSmsOtp(userId);
+        if (verificationId != null && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('SMS code sent to your registered phone number'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    }
   }
 
   Future<void> _verifyOtp() async {
@@ -66,7 +84,7 @@ class _TwoFactorVerificationScreenState
           );
           break;
         case TwoFactorMethod.sms:
-          isValid = await TwoFactorService.verifySmSOtp(
+          isValid = await TwoFactorService.verifySmsOtp(
             userId,
             _otpController.text.trim(),
           );
@@ -355,6 +373,29 @@ class _TwoFactorVerificationScreenState
               color: _attemptCount >= 3 ? kErrorColor : DynamicColors.textSecondary(context),
             ),
             textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: kSpaceXS),
+        if (_selectedMethod == TwoFactorMethod.sms) ...[
+          TextButton(
+            onPressed: _isLoading
+                ? null
+                : () async {
+                    final userId = SessionService.userId;
+                    if (userId != null) {
+                      await TwoFactorService.sendSmsOtp(userId);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('New SMS code sent'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      }
+                    }
+                  },
+            child: const Text('Resend SMS Code'),
           ),
         ],
       ],
