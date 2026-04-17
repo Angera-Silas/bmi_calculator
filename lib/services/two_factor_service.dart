@@ -16,6 +16,11 @@ class TwoFactorService {
   static const String _smsVerificationIdKeyPrefix = 'sms_verification_id_';
   static const String _passkeyKeyPrefix = 'passkey_';
   static const String _deviceTrustKeyPrefix = 'device_trust_';
+  static const String _otpRateLimitKeyPrefix = 'otp_rate_limit_';
+
+  // Rate limiting: max 5 OTP requests per hour per method
+  static const int maxOtpAttemptsPerHour = 5;
+  static const int otpRateLimitWindowSeconds = 3600;
 
   static final _secureStorage = FlutterSecureStorage();
   static final _firebaseAuth = FirebaseAuth.instance;
@@ -383,6 +388,12 @@ class TwoFactorService {
   /// Returns verification ID to be used with verifySmsOtp
   static Future<String?> sendSmsOtp(String userId) async {
     try {
+      // Check rate limit
+      final rateLimitError = await checkOtpRateLimit(userId, TwoFactorMethod.sms);
+      if (rateLimitError != null) {
+        return null; // Return null to signal rate limit (caller should handle)
+      }
+
       final phoneNumber = await _secureStorage.read(key: '$_smsPhoneKeyPrefix$userId');
       if (phoneNumber == null) {
         return null; // Phone not registered
@@ -404,6 +415,9 @@ class TwoFactorService {
           verificationId = vId;
         },
       );
+
+      // Record this attempt for rate limiting
+      await recordOtpAttempt(userId, TwoFactorMethod.sms);
 
       // Store verification ID temporarily for this session
       if (verificationId != null) {
@@ -651,6 +665,99 @@ class TwoFactorService {
     } catch (e) {
       print('Error disabling 2FA: $e');
       return 'Failed to disable 2FA.';
+    }
+  }
+
+  // ── Rate Limiting ──────────────────────────────────────────────────────────
+
+  /// Check if OTP generation is rate limited
+  static Future<String?> checkOtpRateLimit(
+    String userId,
+    TwoFactorMethod method,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final limitKey = '$_otpRateLimitKeyPrefix$userId${method.name}';
+      final limitDataJson = prefs.getString(limitKey);
+
+      if (limitDataJson == null) {
+        // First request, initialize
+        return null;
+      }
+
+      final limitData = jsonDecode(limitDataJson) as Map<String, dynamic>;
+      final attempts = (limitData['attempts'] as int?) ?? 0;
+      final firstAttemptTime = (limitData['firstAttemptTime'] as int?) ?? 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
+
+      // Check if still within rate limit window
+      if (now - firstAttemptTime < (otpRateLimitWindowSeconds * 1000)) {
+        if (attempts >= maxOtpAttemptsPerHour) {
+          final remainingSeconds = otpRateLimitWindowSeconds - ((now - firstAttemptTime) ~/ 1000);
+          final remainingMinutes = (remainingSeconds / 60).ceil();
+          return 'Too many OTP requests. Try again in $remainingMinutes minute(s).';
+        }
+      } else {
+        // Rate limit window expired, reset
+        return null;
+      }
+
+      return null;
+    } catch (e) {
+      print('Error checking OTP rate limit: $e');
+      return null;
+    }
+  }
+
+  /// Record an OTP generation attempt for rate limiting
+  static Future<void> recordOtpAttempt(
+    String userId,
+    TwoFactorMethod method,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final limitKey = '$_otpRateLimitKeyPrefix$userId${method.name}';
+      final limitDataJson = prefs.getString(limitKey);
+
+      int attempts = 1;
+      int firstAttemptTime = DateTime.now().millisecondsSinceEpoch;
+
+      if (limitDataJson != null) {
+        final limitData = jsonDecode(limitDataJson) as Map<String, dynamic>;
+        final prevAttempts = (limitData['attempts'] as int?) ?? 0;
+        final prevFirstTime = (limitData['firstAttemptTime'] as int?) ?? 0;
+        final now = DateTime.now().millisecondsSinceEpoch;
+
+        // Check if still within rate limit window
+        if (now - prevFirstTime < (otpRateLimitWindowSeconds * 1000)) {
+          attempts = prevAttempts + 1;
+          firstAttemptTime = prevFirstTime;
+        }
+        // Otherwise start fresh window
+      }
+
+      final limitData = {
+        'attempts': attempts,
+        'firstAttemptTime': firstAttemptTime,
+      };
+
+      await prefs.setString(limitKey, jsonEncode(limitData));
+    } catch (e) {
+      print('Error recording OTP attempt: $e');
+    }
+  }
+
+  /// Reset rate limit for a method
+  static Future<void> resetOtpRateLimit(
+    String userId,
+    TwoFactorMethod method,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final limitKey = '$_otpRateLimitKeyPrefix$userId${method.name}';
+      await prefs.remove(limitKey);
+    } catch (e) {
+      print('Error resetting OTP rate limit: $e');
     }
   }
 

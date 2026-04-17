@@ -47,8 +47,17 @@ class _TwoFactorVerificationScreenState
     if (_selectedMethod == TwoFactorMethod.sms) {
       final userId = SessionService.userId;
       if (userId != null) {
+        // Check rate limit first
+        final rateLimitError = await TwoFactorService.checkOtpRateLimit(userId, TwoFactorMethod.sms);
+        if (rateLimitError != null && mounted) {
+          _showError(rateLimitError);
+          return;
+        }
+
         final verificationId = await TwoFactorService.sendSmsOtp(userId);
-        if (verificationId != null && mounted) {
+        if (verificationId == null && mounted) {
+          _showError('Failed to send SMS code. You may have exceeded the rate limit.');
+        } else if (verificationId != null && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('SMS code sent to your registered phone number'),
