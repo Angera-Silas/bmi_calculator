@@ -5,7 +5,14 @@ import '../services/two_factor_service.dart';
 import '../services/session_service.dart';
 
 class TotpSetupScreen extends StatefulWidget {
-  const TotpSetupScreen({super.key});
+  final String? userId;
+  final String? userEmail;
+
+  const TotpSetupScreen({
+    super.key,
+    this.userId,
+    this.userEmail,
+  });
 
   @override
   State<TotpSetupScreen> createState() => _TotpSetupScreenState();
@@ -28,7 +35,7 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
   Future<void> _initializeTotpSetup() async {
     setState(() => _isLoading = true);
     try {
-      final userId = SessionService.userId;
+      final userId = widget.userId ?? SessionService.userId;
       if (userId == null) {
         setState(() {
           _error = 'No user session';
@@ -37,8 +44,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
         return;
       }
 
-      // For demo, use a placeholder email
-      final qrUrl = await TwoFactorService.generateTotpSecret(userId, 'user@example.com');
+      final userEmail = widget.userEmail ?? 'user@example.com';
+      final qrUrl = await TwoFactorService.generateTotpSecret(userId, userEmail);
       setState(() {
         _qrCodeUrl = qrUrl;
         _isLoading = false;
@@ -66,7 +73,7 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final userId = SessionService.userId;
+      final userId = widget.userId ?? SessionService.userId;
       if (userId == null) {
         setState(() {
           _error = 'No user session';
@@ -174,10 +181,15 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(kRadiusMD),
               ),
-              child: QrImage(
-                data: _qrCodeUrl!,
-                version: QrVersions.auto,
-                size: 250,
+              child: SizedBox(
+                width: 250,
+                height: 250,
+                child: QrImage(
+                  data: _qrCodeUrl ??'',
+                  version: QrVersions.auto,
+                  errorCorrectionLevel: QrErrorCorrectLevel.H,
+                  gaplessQuiet: false,
+                ),
               ),
             ),
           )

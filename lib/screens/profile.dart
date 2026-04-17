@@ -490,6 +490,13 @@ class _ProfilePageState extends State<ProfilePage> {
                           Divider(
                               color: DynamicColors.border(context), height: 1),
                           _ActionRow(
+                            icon: Icons.shield_outlined,
+                            label: 'Security Settings',
+                            onTap: () => Navigator.pushNamed(context, '/security'),
+                          ),
+                          Divider(
+                              color: DynamicColors.border(context), height: 1),
+                          _ActionRow(
                             icon: Icons.delete_outline,
                             label: l10n.deleteAccount,
                             color: kErrorColor,

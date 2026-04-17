@@ -11,6 +11,7 @@ import 'registration_page.dart';
 import 'reset_password.dart';
 import 'screens/input_page.dart';
 import 'screens/profile.dart';
+import 'screens/security_page.dart';
 import 'screens/splash_screen.dart';
 import 'database/app_database.dart';
 import 'services/locale_service.dart';
@@ -251,6 +252,7 @@ class _BMICalculatorAppState extends State<BMICalculatorApp> {
         '/register': (_) => const RegistrationPage(),
         '/input': (_) => const InputPage(),
         '/profile': (_) => const ProfilePage(),
+        '/security': (_) => const SecurityPage(),
       },
     );
   }
