@@ -1,0 +1,514 @@
+import 'package:flutter/material.dart';
+import '../constants.dart';
+import '../models/two_factor_config.dart';
+import '../services/two_factor_service.dart';
+import '../services/session_service.dart';
+
+class TwoFactorVerificationScreen extends StatefulWidget {
+  final List<TwoFactorMethod> enrolledMethods;
+  final TwoFactorMethod? selectedMethod;
+
+  const TwoFactorVerificationScreen({
+    super.key,
+    required this.enrolledMethods,
+    this.selectedMethod,
+  });
+
+  @override
+  State<TwoFactorVerificationScreen> createState() =>
+      _TwoFactorVerificationScreenState();
+}
+
+class _TwoFactorVerificationScreenState
+    extends State<TwoFactorVerificationScreen> {
+  late TwoFactorMethod _selectedMethod;
+  final _otpController = TextEditingController();
+  bool _isLoading = false;
+  bool _showRecoveryCodeInput = false;
+  int _attemptCount = 0;
+  final int _maxAttempts = 5;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedMethod = widget.selectedMethod ?? widget.enrolledMethods.first;
+  }
+
+  Future<void> _verifyOtp() async {
+    if (_otpController.text.trim().isEmpty) {
+      _showError('Please enter your code');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = SessionService.userId;
+      if (userId == null) {
+        _showError('No user session');
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      bool isValid = false;
+
+      switch (_selectedMethod) {
+        case TwoFactorMethod.totp:
+          isValid = await TwoFactorService.verifyTotpCode(
+            userId,
+            _otpController.text.trim(),
+          );
+          break;
+        case TwoFactorMethod.email:
+          isValid = await TwoFactorService.verifyEmailOtp(
+            userId,
+            _otpController.text.trim(),
+          );
+          break;
+        case TwoFactorMethod.sms:
+          isValid = await TwoFactorService.verifySmSOtp(
+            userId,
+            _otpController.text.trim(),
+          );
+          break;
+        case TwoFactorMethod.passkey:
+          // Passkey verification is platform-specific, skip for now
+          isValid = false;
+          break;
+      }
+
+      setState(() => _isLoading = false);
+
+      if (isValid) {
+        await SessionService.verify2fa();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('2FA verified successfully!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        setState(() {
+          _attemptCount++;
+          if (_attemptCount >= _maxAttempts) {
+            _showRecoveryCodeInput = true;
+          }
+        });
+        _showError(
+          'Invalid code. ${_maxAttempts - _attemptCount} attempts remaining.',
+        );
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showError('Error: $e');
+    }
+  }
+
+  Future<void> _verifyRecoveryCode() async {
+    if (_otpController.text.trim().isEmpty) {
+      _showError('Please enter a recovery code');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      final userId = SessionService.userId;
+      if (userId == null) {
+        _showError('No user session');
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      final isValid = await TwoFactorService.verifyRecoveryCode(
+        userId,
+        _otpController.text.trim(),
+      );
+
+      setState(() => _isLoading = false);
+
+      if (isValid) {
+        await SessionService.verify2fa();
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recovery code accepted!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        _showError('Invalid recovery code');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      _showError('Error: $e');
+    }
+  }
+
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: kErrorColor,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _otpController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Two-Factor Authentication'),
+        backgroundColor: DynamicColors.bg(context),
+        foregroundColor: DynamicColors.textPrimary(context),
+        elevation: 0,
+      ),
+      backgroundColor: DynamicColors.bg(context),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(kSpaceLG),
+        child: _showRecoveryCodeInput
+            ? _buildRecoveryCodeView()
+            : _buildOtpVerificationView(),
+      ),
+    );
+  }
+
+  Widget _buildOtpVerificationView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Method selection (if multiple methods)
+        if (widget.enrolledMethods.length > 1) ...[
+          Text(
+            'Select Verification Method',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: DynamicColors.textSecondary(context),
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: kSpaceMD),
+          Column(
+            children: widget.enrolledMethods.map((method) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: kSpaceXS),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedMethod = method),
+                    borderRadius: BorderRadius.circular(kRadiusMD),
+                    child: Container(
+                      padding: const EdgeInsets.all(kSpaceMD),
+                      decoration: BoxDecoration(
+                        color: _selectedMethod == method
+                            ? kAccent.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(kRadiusMD),
+                        border: Border.all(
+                          color: _selectedMethod == method
+                              ? kAccent
+                              : DynamicColors.border(context),
+                          width: _selectedMethod == method ? 2 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Radio<TwoFactorMethod>(
+                            value: method,
+                            groupValue: _selectedMethod,
+                            onChanged: (value) {
+                              if (value != null) {
+                                setState(() => _selectedMethod = value);
+                              }
+                            },
+                            activeColor: kAccent,
+                          ),
+                          const SizedBox(width: kSpaceMD),
+                          Icon(
+                            _getMethodIcon(method),
+                            color: DynamicColors.textPrimary(context),
+                          ),
+                          const SizedBox(width: kSpaceMD),
+                          Text(
+                            _getMethodLabel(method),
+                            style: TextStyle(
+                              color: DynamicColors.textPrimary(context),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: kSpaceLG),
+        ] else ...[
+          Center(
+            child: Chip(
+              label: Text(_getMethodLabel(widget.enrolledMethods.first)),
+              avatar: Icon(_getMethodIcon(widget.enrolledMethods.first)),
+            ),
+          ),
+          const SizedBox(height: kSpaceLG),
+        ],
+
+        // OTP Input
+        Text(
+          'Enter ${_getMethodLabel(_selectedMethod)}',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: DynamicColors.textSecondary(context),
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: kSpaceXS),
+        Text(
+          _getOtpHelpText(_selectedMethod),
+          style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+        ),
+        const SizedBox(height: kSpaceMD),
+
+        TextField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          maxLength: 6,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 8,
+            color: DynamicColors.textPrimary(context),
+          ),
+          decoration: InputDecoration(
+            hintText: '000000',
+            hintStyle: TextStyle(
+              color: DynamicColors.textSecondary(context).withOpacity(0.3),
+            ),
+            counterText: '',
+            filled: true,
+            fillColor: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              borderSide: BorderSide(color: DynamicColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              borderSide: BorderSide(color: DynamicColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              borderSide: const BorderSide(color: kAccent, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: kSpaceLG),
+
+        // Verify Button
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _verifyOtp,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(kRadiusMD),
+              ),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('Verify', style: kLargeButtonTextStyle),
+          ),
+        ),
+        if (_attemptCount > 0 && !_showRecoveryCodeInput) ...[
+          const SizedBox(height: kSpaceXS),
+          Text(
+            'Attempts remaining: ${_maxAttempts - _attemptCount}',
+            style: TextStyle(
+              fontSize: 12,
+              color: _attemptCount >= 3 ? kErrorColor : DynamicColors.textSecondary(context),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildRecoveryCodeView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(kSpaceMD),
+          decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(kRadiusMD),
+            border: Border.all(color: Colors.orange.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.warning_amber, color: Colors.orange),
+                  const SizedBox(width: kSpaceMD),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Too Many Attempts',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange,
+                          ),
+                        ),
+                        const SizedBox(height: kSpaceXS),
+                        Text(
+                          'Enter a backup recovery code to access your account.',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: DynamicColors.textSecondary(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: kSpaceLG),
+
+        // Recovery Code Input
+        Text(
+          'Recovery Code',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: DynamicColors.textSecondary(context),
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(height: kSpaceXS),
+        TextField(
+          controller: _otpController,
+          keyboardType: TextInputType.number,
+          style: TextStyle(color: DynamicColors.textPrimary(context)),
+          decoration: InputDecoration(
+            hintText: 'Enter your backup code',
+            hintStyle: TextStyle(color: DynamicColors.textSecondary(context).withOpacity(0.5)),
+            filled: true,
+            fillColor: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              borderSide: BorderSide(color: DynamicColors.border(context)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              borderSide: BorderSide(color: DynamicColors.border(context)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              borderSide: const BorderSide(color: kAccent, width: 2),
+            ),
+          ),
+        ),
+        const SizedBox(height: kSpaceLG),
+
+        // Verify Button
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: ElevatedButton(
+            onPressed: _isLoading ? null : _verifyRecoveryCode,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(kRadiusMD),
+              ),
+            ),
+            child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : const Text('Verify Recovery Code', style: kLargeButtonTextStyle),
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _getMethodIcon(TwoFactorMethod method) {
+    switch (method) {
+      case TwoFactorMethod.totp:
+        return Icons.phone_android;
+      case TwoFactorMethod.email:
+        return Icons.email_outlined;
+      case TwoFactorMethod.sms:
+        return Icons.sms_outlined;
+      case TwoFactorMethod.passkey:
+        return Icons.fingerprint;
+    }
+  }
+
+  String _getMethodLabel(TwoFactorMethod method) {
+    switch (method) {
+      case TwoFactorMethod.totp:
+        return 'Authenticator App';
+      case TwoFactorMethod.email:
+        return 'Email Code';
+      case TwoFactorMethod.sms:
+        return 'SMS Code';
+      case TwoFactorMethod.passkey:
+        return 'Passkey';
+    }
+  }
+
+  String _getOtpHelpText(TwoFactorMethod method) {
+    switch (method) {
+      case TwoFactorMethod.totp:
+        return 'Enter the 6-digit code from your authenticator app';
+      case TwoFactorMethod.email:
+        return 'Enter the code sent to your email';
+      case TwoFactorMethod.sms:
+        return 'Enter the code sent to your phone';
+      case TwoFactorMethod.passkey:
+        return 'Use your device biometric or PIN';
+    }
+  }
+}
