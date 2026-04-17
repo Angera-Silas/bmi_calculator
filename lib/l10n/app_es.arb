@@ -1,0 +1,207 @@
+{
+  "@@locale": "es",
+
+  "appTitle": "Calculadora IMC",
+  "appTagline": "Rastrea · Entiende · Mejora",
+  "trackHealthJourney": "Sigue tu camino de salud",
+
+  "tabCalculate": "Calcular",
+  "tabHistory": "Historial",
+  "tabInsights": "Estadísticas",
+  "subtitleCalculate": "Ingresa tus medidas abajo",
+  "subtitleHistory": "Tus cálculos de IMC anteriores",
+  "subtitleInsights": "Tendencias y análisis",
+
+  "liveBmiPreview": "Vista previa IMC",
+  "metricUnits": "Métrico (cm/kg)",
+  "imperialUnits": "Imperial (ft/lbs)",
+  "biologicalSex": "Sexo biológico",
+  "male": "Masculino",
+  "female": "Femenino",
+  "height": "Altura",
+  "weight": "Peso",
+  "age": "Edad",
+  "years": "años",
+  "healthConditions": "Condiciones de salud (opcional)",
+  "pregnancyStatus": "Estado de embarazo (opcional)",
+  "prePregnancyWeight": "Peso antes del embarazo (opcional)",
+  "weightInKg": "Peso en kg",
+  "weightInLbs": "Peso en lbs",
+  "calculateBmi": "Calcular IMC",
+  "selectGenderError": "Por favor selecciona tu sexo para continuar",
+  "signInToSave": "Por favor inicia sesión para guardar tu cálculo",
+  "shortUnderweight": "· Bajo peso",
+  "shortNormal": "· Normal",
+  "shortOverweight": "· Sobrepeso",
+  "shortObese": "· Obeso",
+
+  "yourResults": "Tus Resultados",
+  "bodyMassIndex": "Índice de Masa Corporal",
+  "whatThisMeans": "Qué significa esto",
+  "idealWeightRange": "Rango de Peso Ideal",
+  "minLabel": "Mín",
+  "maxLabel": "Máx",
+  "dailyCalories": "Calorías Diarias",
+  "kcalPerDay": "kcal/día",
+  "waterIntake": "Ingesta de Agua",
+  "litresPerDay": "litros/día",
+  "healthConsideration": "Consideración de Salud",
+  "nutritionRecommendations": "Recomendaciones Nutricionales",
+  "dailyMealPlan": "Plan de Comidas Diario",
+  "macronutrientBalance": "Balance de Macronutrientes",
+  "focusFoods": "Alimentos Principales",
+  "keyRecommendations": "Recomendaciones Clave",
+  "bmiScale": "Escala IMC",
+  "reCalculate": "Recalcular",
+  "resultCopied": "¡Resultado copiado al portapapeles!",
+  "copyToClipboard": "Copiar al portapapeles",
+  "moreRecommendations": "... y {count} recomendaciones más",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "Mi IMC es {bmi} — {category}\n{interpretation}\nRegistrado con BMI Calculator App",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "Bajo Peso Severo",
+  "bmiUnderweight": "Bajo Peso",
+  "bmiNormalWeight": "Peso Normal",
+  "bmiOverweight": "Sobrepeso",
+  "bmiObeseI": "Obesidad Clase I",
+  "bmiObeseII": "Obesidad Clase II",
+  "bmiSeverelyObese": "Obesidad Severa",
+
+  "profile": "Perfil",
+  "edit": "Editar",
+  "cancel": "Cancelar",
+  "save": "Guardar",
+  "guestUser": "Usuario Invitado",
+  "guestModeLocal": "Modo invitado · datos almacenados localmente",
+  "guestModeBanner": "Modo invitado — los datos se almacenan solo localmente. Crea una cuenta para sincronizar entre dispositivos.",
+  "personalInformation": "Información Personal",
+  "fullName": "Nombre completo",
+  "email": "Correo electrónico",
+  "phone": "Teléfono",
+  "notAvailable": "N/D",
+  "account": "Cuenta",
+  "totalChecks": "Total de Controles",
+  "averageBmi": "IMC Promedio",
+  "createAccount": "Crear Cuenta",
+  "signIn": "Iniciar Sesión",
+  "changePassword": "Cambiar Contraseña",
+  "deleteAccount": "Eliminar Cuenta",
+  "leaveGuestMode": "Salir del Modo Invitado",
+  "signOut": "Cerrar Sesión",
+  "profileUpdated": "Perfil actualizado",
+  "leaveGuestTitle": "¿Salir del modo invitado?",
+  "signOutTitle": "¿Cerrar sesión?",
+  "leaveGuestContent": "Tus datos locales serán eliminados. Inicia sesión o crea una cuenta para conservar tu historial.",
+  "signOutContent": "Puedes iniciar sesión nuevamente en cualquier momento para acceder a tus datos sincronizados.",
+  "leave": "Salir",
+  "deleteAccountTitle": "¿Eliminar cuenta?",
+  "deleteAccountContent": "Esto eliminará permanentemente tu cuenta y todos tus datos. Esta acción no se puede deshacer.",
+  "delete": "Eliminar",
+  "language": "Idioma",
+  "selectLanguage": "Seleccionar idioma",
+
+  "welcomeBack": "Bienvenido de nuevo",
+  "signInToContinue": "Inicia sesión para continuar",
+  "emailAddress": "Correo electrónico",
+  "password": "Contraseña",
+  "forgotPassword": "¿Olvidaste tu contraseña?",
+  "continueAsGuest": "Continuar como invitado",
+  "dontHaveAccount": "¿No tienes una cuenta?",
+  "createOne": "Crear una",
+  "emailRequired": "El correo electrónico es obligatorio",
+  "emailInvalid": "Ingresa una dirección de correo válida",
+  "passwordRequired": "La contraseña es obligatoria",
+  "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+
+  "createAccountTitle": "Crear Cuenta",
+  "startTrackingToday": "Empieza a seguir tu salud hoy",
+  "phoneNumber": "Número de teléfono",
+  "confirmPassword": "Confirmar contraseña",
+  "alreadyHaveAccount": "¿Ya tienes una cuenta?",
+  "signInLink": "Iniciar sesión",
+  "nameRequired": "El nombre es obligatorio",
+  "nameShort": "Ingresa tu nombre completo",
+  "phoneRequired": "El número de teléfono es obligatorio",
+  "phoneInvalid": "Ingresa un número de teléfono válido",
+  "confirmPasswordRequired": "Por favor confirma tu contraseña",
+  "passwordsDoNotMatch": "Las contraseñas no coinciden",
+  "passwordStrengthLabel": "Fortaleza de contraseña: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "Débil",
+  "passwordMedium": "Media",
+  "passwordStrong": "Fuerte",
+
+  "resetPasswordTitle": "Restablecer Contraseña",
+  "resetPasswordSubtitle": "Ingresa tu correo electrónico y te enviaremos un enlace para restablecer tu contraseña.",
+  "sendResetLink": "Enviar Enlace",
+  "checkInbox": "Revisa tu bandeja de entrada",
+  "resetLinkSentTo": "Enviamos un enlace para restablecer la contraseña a\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "Volver al inicio de sesión",
+
+  "noHistoryYet": "Sin historial aún",
+  "noHistorySubtitle": "Calcula tu IMC en la pestaña de inicio y tu historial aparecerá aquí.",
+  "today": "Hoy",
+  "yesterday": "Ayer",
+  "yourProgress": "Tu Progreso",
+  "entriesCount": "{count} entradas",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count} entrada",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "Promedio",
+  "lowest": "Mínimo",
+  "highest": "Máximo",
+  "trend": "Tendencia",
+  "deleteRecordTitle": "¿Eliminar registro?",
+  "deleteRecordContent": "Esto eliminará permanentemente este registro de IMC.",
+  "failedToLoadHistory": "Error al cargar historial",
+  "retry": "Reintentar",
+
+  "avgBmi": "IMC Prom.",
+  "latestBmi": "IMC Más Reciente",
+  "bestBmi": "Mejor IMC",
+  "bmiTrend": "Tendencia IMC",
+  "lastNMeasurements": "Últimas {count} mediciones",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "Distribución por Categoría",
+  "basedOnAllRecords": "Basado en {count} registros",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "Mediciones Recientes",
+  "last5Entries": "Últimas 5 entradas",
+  "noDataYet": "Sin datos aún",
+  "noDataSubtitle": "Empieza a registrar tu IMC y tus estadísticas aparecerán aquí."
+}

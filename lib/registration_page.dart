@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'constants.dart';
+import 'generated/l10n/app_localizations.dart';
 import 'services/auth_service.dart';
 import 'services/sync_service.dart';
 import 'services/connectivity_service.dart';
@@ -117,7 +118,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
                 const SizedBox(height: kSpaceLG),
                 Text(
-                  'Create Account',
+                  AppLocalizations.of(context).createAccountTitle,
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -126,13 +127,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 ),
                 const SizedBox(height: kSpaceXS),
                 Text(
-                  'Start tracking your health today',
+                  AppLocalizations.of(context).startTrackingToday,
                   style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
                 ),
                 const SizedBox(height: kSpaceLG),
 
                 // Full Name
-                _buildLabel(context, 'Full name'),
+                _buildLabel(context, AppLocalizations.of(context).fullName),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _nameController,
@@ -140,15 +141,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   style: TextStyle(color: DynamicColors.textPrimary(context)),
                   decoration: _inputDecoration(context, hint: 'John Doe', icon: Icons.person_outline),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Name is required';
-                    if (v.trim().length < 2) return 'Enter your full name';
+                    final l10n = AppLocalizations.of(context);
+                    if (v == null || v.trim().isEmpty) return l10n.nameRequired;
+                    if (v.trim().length < 2) return l10n.nameShort;
                     return null;
                   },
                 ),
                 const SizedBox(height: kSpaceMD),
 
                 // Email
-                _buildLabel(context, 'Email address'),
+                _buildLabel(context, AppLocalizations.of(context).emailAddress),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _emailController,
@@ -156,9 +158,10 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   style: TextStyle(color: DynamicColors.textPrimary(context)),
                   decoration: _inputDecoration(context, hint: 'you@example.com', icon: Icons.email_outlined),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
+                    final l10n = AppLocalizations.of(context);
+                    if (v == null || v.trim().isEmpty) return l10n.emailRequired;
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
-                      return 'Enter a valid email address';
+                      return l10n.emailInvalid;
                     }
                     return null;
                   },
@@ -166,7 +169,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: kSpaceMD),
 
                 // Phone
-                _buildLabel(context, 'Phone number'),
+                _buildLabel(context, AppLocalizations.of(context).phoneNumber),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _phoneController,
@@ -174,15 +177,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   style: TextStyle(color: DynamicColors.textPrimary(context)),
                   decoration: _inputDecoration(context, hint: '+1 234 567 8900', icon: Icons.phone_outlined),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Phone number is required';
-                    if (v.trim().length < 7) return 'Enter a valid phone number';
+                    final l10n = AppLocalizations.of(context);
+                    if (v == null || v.trim().isEmpty) return l10n.phoneRequired;
+                    if (v.trim().length < 7) return l10n.phoneInvalid;
                     return null;
                   },
                 ),
                 const SizedBox(height: kSpaceMD),
 
                 // Password
-                _buildLabel(context, 'Password'),
+                _buildLabel(context, AppLocalizations.of(context).password),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _passwordController,
@@ -203,8 +207,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Password must be at least 6 characters';
+                    final l10n = AppLocalizations.of(context);
+                    if (v == null || v.trim().isEmpty) return l10n.passwordRequired;
+                    if (v.length < 6) return l10n.passwordTooShort;
                     return null;
                   },
                 ),
@@ -217,7 +222,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: kSpaceMD),
 
                 // Confirm Password
-                _buildLabel(context, 'Confirm password'),
+                _buildLabel(context, AppLocalizations.of(context).confirmPassword),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _confirmPasswordController,
@@ -237,8 +242,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Please confirm your password';
-                    if (v != _passwordController.text) return 'Passwords do not match';
+                    final l10n = AppLocalizations.of(context);
+                    if (v == null || v.trim().isEmpty) return l10n.confirmPasswordRequired;
+                    if (v != _passwordController.text) return l10n.passwordsDoNotMatch;
                     return null;
                   },
                 ),
@@ -268,7 +274,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text('Create Account', style: kLargeButtonTextStyle),
+                        : Text(AppLocalizations.of(context).createAccountTitle, style: kLargeButtonTextStyle),
                   ),
                 ),
                 const SizedBox(height: kSpaceLG),
@@ -280,7 +286,7 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     onPressed: _isLoading ? null : _continueAsGuest,
                     icon: const Icon(Icons.person_outline, size: 18),
                     label: Text(
-                      'Continue as Guest',
+                      AppLocalizations.of(context).continueAsGuest,
                       style: TextStyle(
                         color: kAccent,
                         fontWeight: FontWeight.w600,
@@ -295,13 +301,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Already have an account? ',
+                      '${AppLocalizations.of(context).alreadyHaveAccount} ',
                       style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pushReplacementNamed(context, '/login'),
-                      child: const Text(
-                        'Sign in',
+                      child: Text(
+                        AppLocalizations.of(context).signInLink,
                         style: TextStyle(
                           color: kAccent,
                           fontWeight: FontWeight.w700,
@@ -375,7 +381,8 @@ class _PasswordStrengthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final labels = ['', 'Weak', 'Medium', 'Strong'];
+    final l10n = AppLocalizations.of(context);
+    final levelLabels = ['', l10n.passwordWeak, l10n.passwordMedium, l10n.passwordStrong];
     final colors = [Colors.transparent, kErrorColor, kWarningColor, kSuccessColor];
 
     return Column(
@@ -397,7 +404,7 @@ class _PasswordStrengthBar extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Password strength: ${labels[strength]}',
+          l10n.passwordStrengthLabel(levelLabels[strength]),
           style: TextStyle(
             fontSize: 12,
             color: colors[strength],

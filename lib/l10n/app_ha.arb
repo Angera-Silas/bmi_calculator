@@ -1,0 +1,207 @@
+{
+  "@@locale": "ha",
+
+  "appTitle": "Ƙididdigan BMI",
+  "appTagline": "Bincika · Fahimta · Inganta",
+  "trackHealthJourney": "Bincika tafiyar lafiyar ku",
+
+  "tabCalculate": "Ƙidaya",
+  "tabHistory": "Tarihi",
+  "tabInsights": "Kididdiga",
+  "subtitleCalculate": "Shigar da aunanni ku a ƙasa",
+  "subtitleHistory": "Lissafin BMI ku na da",
+  "subtitleInsights": "Yanayi da bincike",
+
+  "liveBmiPreview": "Kallon BMI na kai tsaye",
+  "metricUnits": "Metric (cm/kg)",
+  "imperialUnits": "Imperial (ft/lbs)",
+  "biologicalSex": "Jinsi ta halitta",
+  "male": "Namiji",
+  "female": "Mace",
+  "height": "Tsawo",
+  "weight": "Nauyi",
+  "age": "Shekaru",
+  "years": "shk",
+  "healthConditions": "Yanayin Lafiya (zaɓi)",
+  "pregnancyStatus": "Yanayin Ciki (zaɓi)",
+  "prePregnancyWeight": "Nauyi kafin ciki (zaɓi)",
+  "weightInKg": "Nauyi a kg",
+  "weightInLbs": "Nauyi a lbs",
+  "calculateBmi": "Ƙidaya BMI",
+  "selectGenderError": "Don Allah zaɓi jinsinka don ci gaba",
+  "signInToSave": "Don Allah shiga don adana lissafi",
+  "shortUnderweight": "· Ƙarancin nauyi",
+  "shortNormal": "· Al'ada",
+  "shortOverweight": "· Yawan nauyi",
+  "shortObese": "· Kiba",
+
+  "yourResults": "Sakamakon Ku",
+  "bodyMassIndex": "Gwajin Nauyin Jiki",
+  "whatThisMeans": "Menene ma'anar wannan",
+  "idealWeightRange": "Kewayon Nauyi Mafi Kyau",
+  "minLabel": "Ƙarami",
+  "maxLabel": "Mafi girma",
+  "dailyCalories": "Adadin Kalori Kowace Rana",
+  "kcalPerDay": "kcal/rana",
+  "waterIntake": "Shan Ruwa",
+  "litresPerDay": "lita/rana",
+  "healthConsideration": "Gargaɗi na Lafiya",
+  "nutritionRecommendations": "Shawarwarin Abinci Mai Gina Jiki",
+  "dailyMealPlan": "Shirin Abinci na Kowace Rana",
+  "macronutrientBalance": "Daidaituwar Abinci Mai Gina Jiki",
+  "focusFoods": "Abincin Mafi Muhimmanci",
+  "keyRecommendations": "Muhimman Shawarwari",
+  "bmiScale": "Ma'aunin BMI",
+  "reCalculate": "Ƙidaya Sake",
+  "resultCopied": "An kwafi sakamakon!",
+  "copyToClipboard": "Kwafi sakamakon",
+  "moreRecommendations": "... da kuma shawarwari {count} ƙari",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "BMI na shine {bmi} — {category}\n{interpretation}\nAn bincika da BMI Calculator App",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "Ƙarancin Nauyi Sosai",
+  "bmiUnderweight": "Ƙarancin Nauyi",
+  "bmiNormalWeight": "Nauyin Al'ada",
+  "bmiOverweight": "Yawan Nauyi",
+  "bmiObeseI": "Kiba Daraja na I",
+  "bmiObeseII": "Kiba Daraja na II",
+  "bmiSeverelyObese": "Kiba Mai Tsanani",
+
+  "profile": "Bayanai na",
+  "edit": "Gyara",
+  "cancel": "Soke",
+  "save": "Adana",
+  "guestUser": "Baƙon Mai amfani",
+  "guestModeLocal": "Yanayin baƙo · bayanan an adana a wannan na'ura",
+  "guestModeBanner": "Yanayin baƙo — an adana bayanan a wannan na'ura kawai. Ƙirƙiri asusun don daidaita tsakanin na'urorin.",
+  "personalInformation": "Bayanan Kai",
+  "fullName": "Cikakken suna",
+  "email": "Imel",
+  "phone": "Waya",
+  "notAvailable": "Babu",
+  "account": "Asusun",
+  "totalChecks": "Jimillar Gwaji",
+  "averageBmi": "Matsakaicin BMI",
+  "createAccount": "Ƙirƙiri Asusun",
+  "signIn": "Shiga",
+  "changePassword": "Canza Kalmar Sirri",
+  "deleteAccount": "Share Asusun",
+  "leaveGuestMode": "Fita Daga Yanayin Baƙo",
+  "signOut": "Fita",
+  "profileUpdated": "An sabunta bayanai",
+  "leaveGuestTitle": "Fita daga yanayin baƙo?",
+  "signOutTitle": "Fita?",
+  "leaveGuestContent": "Za a share bayananku na gida. Shiga ko ƙirƙiri asusun don adana tarihin ku.",
+  "signOutContent": "Zaku iya shiga sake a kowane lokaci.",
+  "leave": "Fita",
+  "deleteAccountTitle": "Share asusun?",
+  "deleteAccountContent": "Wannan zai share asusun ku da duk bayananku har abada. Ba za a iya mayar da hankali ba.",
+  "delete": "Share",
+  "language": "Harshe",
+  "selectLanguage": "Zaɓi harshe",
+
+  "welcomeBack": "Barka da dawowar ku",
+  "signInToContinue": "Shiga don ci gaba",
+  "emailAddress": "Adireshin imel",
+  "password": "Kalmar sirri",
+  "forgotPassword": "Kun manta kalmar sirri?",
+  "continueAsGuest": "Ci gaba a matsayin baƙo",
+  "dontHaveAccount": "Babu asusun?",
+  "createOne": "Ƙirƙiri ɗaya",
+  "emailRequired": "Ana buƙatar imel",
+  "emailInvalid": "Shigar da adireshin imel mai inganci",
+  "passwordRequired": "Ana buƙatar kalmar sirri",
+  "passwordTooShort": "Kalmar sirri dole ta kasance haruffa 6 aƙalla",
+
+  "createAccountTitle": "Ƙirƙiri Asusun",
+  "startTrackingToday": "Fara binciken lafiyar ku yau",
+  "phoneNumber": "Lambar waya",
+  "confirmPassword": "Tabbatar da kalmar sirri",
+  "alreadyHaveAccount": "Kuna da asusun?",
+  "signInLink": "Shiga",
+  "nameRequired": "Ana buƙatar suna",
+  "nameShort": "Shigar da cikakken sunanka",
+  "phoneRequired": "Ana buƙatar lambar waya",
+  "phoneInvalid": "Shigar da lambar waya mai inganci",
+  "confirmPasswordRequired": "Don Allah tabbatar da kalmar sirri",
+  "passwordsDoNotMatch": "Kalmomin sirri bai yi daidai ba",
+  "passwordStrengthLabel": "Ƙarfin kalmar sirri: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "Mai rauni",
+  "passwordMedium": "Matsakaici",
+  "passwordStrong": "Mai ƙarfi",
+
+  "resetPasswordTitle": "Sake Saita Kalmar Sirri",
+  "resetPasswordSubtitle": "Shigar da imelku kuma za mu aika muku da haɗin don sake saita kalmar sirri.",
+  "sendResetLink": "Aika Haɗin",
+  "checkInbox": "Bincika akwatin saƙon ku",
+  "resetLinkSentTo": "Mun aika da haɗin sake saita kalmar sirri zuwa\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "Koma shiga",
+
+  "noHistoryYet": "Babu tarihi tukuna",
+  "noHistorySubtitle": "Ƙidaya BMI ku a cikin shafin Ƙidaya kuma tarihin ku zai bayyana a nan.",
+  "today": "Yau",
+  "yesterday": "Jiya",
+  "yourProgress": "Ci Gabanka",
+  "entriesCount": "bayanai {count}",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "bayani {count}",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "Matsakaici",
+  "lowest": "Ƙarami",
+  "highest": "Mafi girma",
+  "trend": "Yanayi",
+  "deleteRecordTitle": "Share rikodin?",
+  "deleteRecordContent": "Za a share wannan rikodin BMI har abada.",
+  "failedToLoadHistory": "Kasa loda tarihi",
+  "retry": "Gwada sake",
+
+  "avgBmi": "Matsakaicin BMI",
+  "latestBmi": "BMI na Ƙarshe",
+  "bestBmi": "Mafi Kyawun BMI",
+  "bmiTrend": "Yanayin BMI",
+  "lastNMeasurements": "Aunannin {count} na ƙarshe",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "Rarraba Rukuni",
+  "basedOnAllRecords": "Bisa ga rikodin {count} duka",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "Aunannin Kwanan Nan",
+  "last5Entries": "Bayanai 5 na ƙarshe",
+  "noDataYet": "Babu bayanai tukuna",
+  "noDataSubtitle": "Fara binciken BMI ku kuma kididdigan ku zai bayyana a nan."
+}

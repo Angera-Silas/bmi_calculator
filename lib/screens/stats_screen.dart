@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../constants.dart';
+import '../generated/l10n/app_localizations.dart';
 import '../models/bmi_record.dart';
 import '../database/app_database.dart';
 import '../services/session_service.dart';
@@ -62,41 +63,48 @@ class _StatsScreenState extends State<StatsScreen> {
           padding: const EdgeInsets.all(kSpaceMD),
           children: [
             // ── Hero Stats ──────────────────────────────────────────────────
-            Row(
-              children: [
-                _HeroCard(
-                  label: 'Total Checks',
-                  value: '$totalChecks',
-                  icon: Icons.calendar_month_outlined,
-                  color: kAccent,
-                ),
-                const SizedBox(width: kSpaceSM),
-                _HeroCard(
-                  label: 'Avg BMI',
-                  value: avgBMI.toStringAsFixed(1),
-                  icon: Icons.analytics_outlined,
-                  color: getBMIColor(avgBMI),
-                ),
-              ],
-            ),
-            const SizedBox(height: kSpaceSM),
-            Row(
-              children: [
-                _HeroCard(
-                  label: 'Latest BMI',
-                  value: latestBMI.bmiResult,
-                  icon: Icons.monitor_weight_outlined,
-                  color: getBMIColor(latestBMI.bmiValue),
-                ),
-                const SizedBox(width: kSpaceSM),
-                _HeroCard(
-                  label: 'Best BMI',
-                  value: bestBMI.bmiResult,
-                  icon: Icons.emoji_events_outlined,
-                  color: kNormalColor,
-                ),
-              ],
-            ),
+            Builder(builder: (context) {
+              final l10n = AppLocalizations.of(context);
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      _HeroCard(
+                        label: l10n.totalChecks,
+                        value: '$totalChecks',
+                        icon: Icons.calendar_month_outlined,
+                        color: kAccent,
+                      ),
+                      const SizedBox(width: kSpaceSM),
+                      _HeroCard(
+                        label: l10n.avgBmi,
+                        value: avgBMI.toStringAsFixed(1),
+                        icon: Icons.analytics_outlined,
+                        color: getBMIColor(avgBMI),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: kSpaceSM),
+                  Row(
+                    children: [
+                      _HeroCard(
+                        label: l10n.latestBmi,
+                        value: latestBMI.bmiResult,
+                        icon: Icons.monitor_weight_outlined,
+                        color: getBMIColor(latestBMI.bmiValue),
+                      ),
+                      const SizedBox(width: kSpaceSM),
+                      _HeroCard(
+                        label: l10n.bestBmi,
+                        value: bestBMI.bmiResult,
+                        icon: Icons.emoji_events_outlined,
+                        color: kNormalColor,
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            }),
             const SizedBox(height: kSpaceMD),
 
             // ── BMI Trend Chart ─────────────────────────────────────────────
@@ -104,12 +112,15 @@ class _StatsScreenState extends State<StatsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _CardHeader(
-                    icon: Icons.show_chart,
-                    iconColor: kAccent,
-                    title: 'BMI Trend',
-                    subtitle: 'Last ${chartData.length} measurements',
-                  ),
+                  Builder(builder: (context) {
+                    final l10n = AppLocalizations.of(context);
+                    return _CardHeader(
+                      icon: Icons.show_chart,
+                      iconColor: kAccent,
+                      title: l10n.bmiTrend,
+                      subtitle: l10n.lastNMeasurements(chartData.length),
+                    );
+                  }),
                   const SizedBox(height: kSpaceLG),
                   SizedBox(
                     height: 200,
@@ -125,12 +136,15 @@ class _StatsScreenState extends State<StatsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _CardHeader(
-                    icon: Icons.pie_chart_outline,
-                    iconColor: kInfoColor,
-                    title: 'Category Distribution',
-                    subtitle: 'Based on all ${records.length} records',
-                  ),
+                  Builder(builder: (context) {
+                    final l10n = AppLocalizations.of(context);
+                    return _CardHeader(
+                      icon: Icons.pie_chart_outline,
+                      iconColor: kInfoColor,
+                      title: l10n.categoryDistribution,
+                      subtitle: l10n.basedOnAllRecords(records.length),
+                    );
+                  }),
                   const SizedBox(height: kSpaceMD),
                   ...categoryCount.entries.map((e) {
                     final pct = (e.value / totalChecks * 100).round();
@@ -185,12 +199,15 @@ class _StatsScreenState extends State<StatsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _CardHeader(
-                    icon: Icons.history_outlined,
-                    iconColor: kWarningColor,
-                    title: 'Recent Measurements',
-                    subtitle: 'Last 5 entries',
-                  ),
+                  Builder(builder: (context) {
+                    final l10n = AppLocalizations.of(context);
+                    return _CardHeader(
+                      icon: Icons.history_outlined,
+                      iconColor: kWarningColor,
+                      title: l10n.recentMeasurements,
+                      subtitle: l10n.last5Entries,
+                    );
+                  }),
                   const SizedBox(height: kSpaceMD),
                   ...records.take(5).map((r) {
                     final color = getBMIColor(r.bmiValue);
@@ -566,7 +583,7 @@ class _EmptyStats extends StatelessWidget {
             ),
             const SizedBox(height: kSpaceLG),
             Text(
-              'No data yet',
+              AppLocalizations.of(context).noDataYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -575,7 +592,7 @@ class _EmptyStats extends StatelessWidget {
             ),
             const SizedBox(height: kSpaceSM),
             Text(
-              'Start tracking your BMI and your insights will appear here.',
+              AppLocalizations.of(context).noDataSubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: DynamicColors.textSecondary(context),

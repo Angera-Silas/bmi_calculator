@@ -1,0 +1,207 @@
+{
+  "@@locale": "id",
+
+  "appTitle": "Kalkulator BMI",
+  "appTagline": "Lacak · Pahami · Tingkatkan",
+  "trackHealthJourney": "Lacak perjalanan kesehatan Anda",
+
+  "tabCalculate": "Hitung",
+  "tabHistory": "Riwayat",
+  "tabInsights": "Statistik",
+  "subtitleCalculate": "Masukkan pengukuran Anda di bawah",
+  "subtitleHistory": "Perhitungan BMI Anda sebelumnya",
+  "subtitleInsights": "Tren dan analisis",
+
+  "liveBmiPreview": "Pratinjau BMI Langsung",
+  "metricUnits": "Metrik (cm/kg)",
+  "imperialUnits": "Imperial (ft/lbs)",
+  "biologicalSex": "Jenis kelamin biologis",
+  "male": "Laki-laki",
+  "female": "Perempuan",
+  "height": "Tinggi badan",
+  "weight": "Berat badan",
+  "age": "Usia",
+  "years": "thn",
+  "healthConditions": "Kondisi kesehatan (opsional)",
+  "pregnancyStatus": "Status kehamilan (opsional)",
+  "prePregnancyWeight": "Berat sebelum hamil (opsional)",
+  "weightInKg": "Berat dalam kg",
+  "weightInLbs": "Berat dalam lbs",
+  "calculateBmi": "Hitung BMI",
+  "selectGenderError": "Silakan pilih jenis kelamin untuk melanjutkan",
+  "signInToSave": "Masuk untuk menyimpan perhitungan Anda",
+  "shortUnderweight": "· Kurang berat",
+  "shortNormal": "· Normal",
+  "shortOverweight": "· Kelebihan berat",
+  "shortObese": "· Obesitas",
+
+  "yourResults": "Hasil Anda",
+  "bodyMassIndex": "Indeks Massa Tubuh",
+  "whatThisMeans": "Apa artinya ini",
+  "idealWeightRange": "Rentang Berat Ideal",
+  "minLabel": "Min",
+  "maxLabel": "Maks",
+  "dailyCalories": "Kalori Harian",
+  "kcalPerDay": "kkal/hari",
+  "waterIntake": "Asupan Air",
+  "litresPerDay": "liter/hari",
+  "healthConsideration": "Pertimbangan Kesehatan",
+  "nutritionRecommendations": "Rekomendasi Gizi",
+  "dailyMealPlan": "Rencana Makan Harian",
+  "macronutrientBalance": "Keseimbangan Makronutrien",
+  "focusFoods": "Makanan Utama",
+  "keyRecommendations": "Rekomendasi Utama",
+  "bmiScale": "Skala BMI",
+  "reCalculate": "Hitung Ulang",
+  "resultCopied": "Hasil disalin ke clipboard!",
+  "copyToClipboard": "Salin ke clipboard",
+  "moreRecommendations": "... dan {count} rekomendasi lagi",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "BMI saya {bmi} — {category}\n{interpretation}\nDilacak dengan BMI Calculator App",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "Sangat Kekurangan Berat",
+  "bmiUnderweight": "Kekurangan Berat",
+  "bmiNormalWeight": "Berat Normal",
+  "bmiOverweight": "Kelebihan Berat",
+  "bmiObeseI": "Obesitas Kelas I",
+  "bmiObeseII": "Obesitas Kelas II",
+  "bmiSeverelyObese": "Obesitas Berat",
+
+  "profile": "Profil",
+  "edit": "Edit",
+  "cancel": "Batal",
+  "save": "Simpan",
+  "guestUser": "Pengguna Tamu",
+  "guestModeLocal": "Mode tamu · data tersimpan lokal",
+  "guestModeBanner": "Mode tamu — data hanya tersimpan di perangkat. Buat akun untuk sinkronisasi antar perangkat.",
+  "personalInformation": "Informasi Pribadi",
+  "fullName": "Nama lengkap",
+  "email": "Email",
+  "phone": "Telepon",
+  "notAvailable": "N/A",
+  "account": "Akun",
+  "totalChecks": "Total Pemeriksaan",
+  "averageBmi": "Rata-rata BMI",
+  "createAccount": "Buat Akun",
+  "signIn": "Masuk",
+  "changePassword": "Ganti Password",
+  "deleteAccount": "Hapus Akun",
+  "leaveGuestMode": "Keluar Mode Tamu",
+  "signOut": "Keluar",
+  "profileUpdated": "Profil diperbarui",
+  "leaveGuestTitle": "Keluar dari mode tamu?",
+  "signOutTitle": "Keluar?",
+  "leaveGuestContent": "Data lokal Anda akan dihapus. Masuk atau buat akun untuk menyimpan riwayat Anda.",
+  "signOutContent": "Anda bisa masuk kembali kapan saja.",
+  "leave": "Keluar",
+  "deleteAccountTitle": "Hapus akun?",
+  "deleteAccountContent": "Ini akan menghapus akun dan semua data Anda secara permanen. Tidak dapat dibatalkan.",
+  "delete": "Hapus",
+  "language": "Bahasa",
+  "selectLanguage": "Pilih bahasa",
+
+  "welcomeBack": "Selamat datang kembali",
+  "signInToContinue": "Masuk untuk melanjutkan",
+  "emailAddress": "Alamat email",
+  "password": "Password",
+  "forgotPassword": "Lupa password?",
+  "continueAsGuest": "Lanjutkan sebagai tamu",
+  "dontHaveAccount": "Belum punya akun?",
+  "createOne": "Buat akun",
+  "emailRequired": "Email wajib diisi",
+  "emailInvalid": "Masukkan alamat email yang valid",
+  "passwordRequired": "Password wajib diisi",
+  "passwordTooShort": "Password minimal 6 karakter",
+
+  "createAccountTitle": "Buat Akun",
+  "startTrackingToday": "Mulai lacak kesehatan Anda hari ini",
+  "phoneNumber": "Nomor telepon",
+  "confirmPassword": "Konfirmasi password",
+  "alreadyHaveAccount": "Sudah punya akun?",
+  "signInLink": "Masuk",
+  "nameRequired": "Nama wajib diisi",
+  "nameShort": "Masukkan nama lengkap Anda",
+  "phoneRequired": "Nomor telepon wajib diisi",
+  "phoneInvalid": "Masukkan nomor telepon yang valid",
+  "confirmPasswordRequired": "Konfirmasi password Anda",
+  "passwordsDoNotMatch": "Password tidak cocok",
+  "passwordStrengthLabel": "Kekuatan password: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "Lemah",
+  "passwordMedium": "Sedang",
+  "passwordStrong": "Kuat",
+
+  "resetPasswordTitle": "Reset Password",
+  "resetPasswordSubtitle": "Masukkan email Anda dan kami akan kirim link untuk mereset password.",
+  "sendResetLink": "Kirim Link Reset",
+  "checkInbox": "Periksa kotak masuk Anda",
+  "resetLinkSentTo": "Kami mengirim link reset password ke\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "Kembali ke halaman masuk",
+
+  "noHistoryYet": "Belum ada riwayat",
+  "noHistorySubtitle": "Hitung BMI Anda di tab Hitung dan riwayat Anda akan muncul di sini.",
+  "today": "Hari ini",
+  "yesterday": "Kemarin",
+  "yourProgress": "Kemajuan Anda",
+  "entriesCount": "{count} entri",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count} entri",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "Rata-rata",
+  "lowest": "Terendah",
+  "highest": "Tertinggi",
+  "trend": "Tren",
+  "deleteRecordTitle": "Hapus catatan?",
+  "deleteRecordContent": "Catatan BMI ini akan dihapus secara permanen.",
+  "failedToLoadHistory": "Gagal memuat riwayat",
+  "retry": "Coba lagi",
+
+  "avgBmi": "Rata-rata BMI",
+  "latestBmi": "BMI Terbaru",
+  "bestBmi": "BMI Terbaik",
+  "bmiTrend": "Tren BMI",
+  "lastNMeasurements": "{count} pengukuran terakhir",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "Distribusi Kategori",
+  "basedOnAllRecords": "Berdasarkan {count} catatan",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "Pengukuran Terbaru",
+  "last5Entries": "5 entri terakhir",
+  "noDataYet": "Belum ada data",
+  "noDataSubtitle": "Mulai lacak BMI Anda dan statistik akan muncul di sini."
+}

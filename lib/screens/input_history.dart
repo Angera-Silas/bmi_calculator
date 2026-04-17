@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../constants.dart';
+import '../generated/l10n/app_localizations.dart';
 import '../models/bmi_record.dart';
 import '../database/app_database.dart';
 import '../services/session_service.dart';
@@ -33,14 +34,15 @@ class _InputHistoryState extends State<InputHistory> {
     _refresh();
   }
 
-  String _formatDate(DateTime dt) {
+  String _formatDate(BuildContext context, DateTime dt) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
     final recordDay = DateTime(dt.year, dt.month, dt.day);
+    final l10n = AppLocalizations.of(context);
 
-    if (recordDay == today) return 'Today';
-    if (recordDay == yesterday) return 'Yesterday';
+    if (recordDay == today) return l10n.today;
+    if (recordDay == yesterday) return l10n.yesterday;
     return DateFormat('d MMM yyyy').format(dt);
   }
 
@@ -75,7 +77,7 @@ class _InputHistoryState extends State<InputHistory> {
         // ── Group by date ────────────────────────────────────────────────
         final grouped = <String, List<BmiRecord>>{};
         for (final r in records) {
-          final key = _formatDate(r.timestamp);
+          final key = _formatDate(context, r.timestamp);
           grouped.putIfAbsent(key, () => []).add(r);
         }
 
@@ -177,7 +179,7 @@ class _StatsSummaryCard extends StatelessWidget {
               ),
               const SizedBox(width: kSpaceSM),
               Text(
-                'Your Progress',
+                AppLocalizations.of(context).yourProgress,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 14,
@@ -186,7 +188,9 @@ class _StatsSummaryCard extends StatelessWidget {
               ),
               const Spacer(),
               Text(
-                '$total ${total == 1 ? "entry" : "entries"}',
+                total == 1
+                    ? AppLocalizations.of(context).entryCount(total)
+                    : AppLocalizations.of(context).entriesCount(total),
                 style: TextStyle(
                   fontSize: 12,
                   color: DynamicColors.textSecondary(context),
@@ -197,9 +201,9 @@ class _StatsSummaryCard extends StatelessWidget {
           const SizedBox(height: kSpaceMD),
           Row(
             children: [
-              _MiniStat(label: 'Average', value: avgBMI.toStringAsFixed(1), color: getBMIColor(avgBMI)),
-              _MiniStat(label: 'Lowest', value: minBMI.toStringAsFixed(1), color: getBMIColor(minBMI)),
-              _MiniStat(label: 'Highest', value: maxBMI.toStringAsFixed(1), color: getBMIColor(maxBMI)),
+              _MiniStat(label: AppLocalizations.of(context).average, value: avgBMI.toStringAsFixed(1), color: getBMIColor(avgBMI)),
+              _MiniStat(label: AppLocalizations.of(context).lowest, value: minBMI.toStringAsFixed(1), color: getBMIColor(minBMI)),
+              _MiniStat(label: AppLocalizations.of(context).highest, value: maxBMI.toStringAsFixed(1), color: getBMIColor(maxBMI)),
               Expanded(
                 child: Column(
                   children: [
@@ -214,7 +218,7 @@ class _StatsSummaryCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'Trend',
+                      AppLocalizations.of(context).trend,
                       style: TextStyle(
                         fontSize: 11,
                         color: DynamicColors.textSecondary(context),
@@ -294,28 +298,31 @@ class _HistoryTile extends StatelessWidget {
         padding: const EdgeInsets.only(right: kSpaceMD),
         child: const Icon(Icons.delete_outline, color: Colors.white),
       ),
-      confirmDismiss: (_) => showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: DynamicColors.card(context),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMD)),
-          title: Text('Delete record?', style: TextStyle(color: DynamicColors.textPrimary(context))),
-          content: Text(
-            'This will permanently remove this BMI record.',
-            style: TextStyle(color: DynamicColors.textSecondary(context)),
+      confirmDismiss: (_) {
+        final l10n = AppLocalizations.of(context);
+        return showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: DynamicColors.card(context),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMD)),
+            title: Text(l10n.deleteRecordTitle, style: TextStyle(color: DynamicColors.textPrimary(context))),
+            content: Text(
+              l10n.deleteRecordContent,
+              style: TextStyle(color: DynamicColors.textSecondary(context)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(l10n.cancel, style: TextStyle(color: DynamicColors.textSecondary(context))),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: Text(l10n.delete, style: const TextStyle(color: kErrorColor, fontWeight: FontWeight.w700)),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text('Cancel', style: TextStyle(color: DynamicColors.textSecondary(context))),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Delete', style: TextStyle(color: kErrorColor, fontWeight: FontWeight.w700)),
-            ),
-          ],
-        ),
-      ),
+        );
+      },
       onDismissed: (_) => onDelete(),
       child: Container(
         margin: const EdgeInsets.only(bottom: kSpaceSM),
@@ -430,7 +437,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: kSpaceLG),
             Text(
-              'No history yet',
+              AppLocalizations.of(context).noHistoryYet,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -439,7 +446,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: kSpaceSM),
             Text(
-              'Calculate your BMI on the Home tab and your history will appear here.',
+              AppLocalizations.of(context).noHistorySubtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: DynamicColors.textSecondary(context),
@@ -470,7 +477,7 @@ class _ErrorState extends StatelessWidget {
             const Icon(Icons.error_outline, color: kErrorColor, size: 48),
             const SizedBox(height: kSpaceMD),
             Text(
-              'Failed to load history',
+              AppLocalizations.of(context).failedToLoadHistory,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
@@ -480,7 +487,7 @@ class _ErrorState extends StatelessWidget {
             const SizedBox(height: kSpaceSM),
             TextButton(
               onPressed: onRetry,
-              child: const Text('Retry', style: TextStyle(color: kAccent, fontWeight: FontWeight.w700)),
+              child: Text(AppLocalizations.of(context).retry, style: const TextStyle(color: kAccent, fontWeight: FontWeight.w700)),
             ),
           ],
         ),

@@ -1,0 +1,207 @@
+{
+  "@@locale": "hi",
+
+  "appTitle": "BMI कैलकुलेटर",
+  "appTagline": "ट्रैक करें · समझें · सुधारें",
+  "trackHealthJourney": "अपनी स्वास्थ्य यात्रा को ट्रैक करें",
+
+  "tabCalculate": "कैलकुलेट",
+  "tabHistory": "इतिहास",
+  "tabInsights": "विश्लेषण",
+  "subtitleCalculate": "नीचे अपनी माप दर्ज करें",
+  "subtitleHistory": "आपके पिछले BMI गणनाएं",
+  "subtitleInsights": "रुझान और विश्लेषण",
+
+  "liveBmiPreview": "BMI लाइव पूर्वावलोकन",
+  "metricUnits": "मेट्रिक (cm/kg)",
+  "imperialUnits": "इंपीरियल (ft/lbs)",
+  "biologicalSex": "जैविक लिंग",
+  "male": "पुरुष",
+  "female": "महिला",
+  "height": "ऊंचाई",
+  "weight": "वजन",
+  "age": "उम्र",
+  "years": "वर्ष",
+  "healthConditions": "स्वास्थ्य स्थितियां (वैकल्पिक)",
+  "pregnancyStatus": "गर्भावस्था की स्थिति (वैकल्पिक)",
+  "prePregnancyWeight": "गर्भावस्था से पहले का वजन (वैकल्पिक)",
+  "weightInKg": "वजन किलोग्राम में",
+  "weightInLbs": "वजन पाउंड में",
+  "calculateBmi": "BMI कैलकुलेट करें",
+  "selectGenderError": "जारी रखने के लिए कृपया अपना लिंग चुनें",
+  "signInToSave": "गणना सहेजने के लिए कृपया साइन इन करें",
+  "shortUnderweight": "· कम वजन",
+  "shortNormal": "· सामान्य",
+  "shortOverweight": "· अधिक वजन",
+  "shortObese": "· मोटापा",
+
+  "yourResults": "आपके परिणाम",
+  "bodyMassIndex": "बॉडी मास इंडेक्स",
+  "whatThisMeans": "इसका क्या मतलब है",
+  "idealWeightRange": "आदर्श वजन सीमा",
+  "minLabel": "न्यूनतम",
+  "maxLabel": "अधिकतम",
+  "dailyCalories": "दैनिक कैलोरी",
+  "kcalPerDay": "kcal/दिन",
+  "waterIntake": "पानी का सेवन",
+  "litresPerDay": "लीटर/दिन",
+  "healthConsideration": "स्वास्थ्य संबंधी विचार",
+  "nutritionRecommendations": "पोषण संबंधी सिफारिशें",
+  "dailyMealPlan": "दैनिक भोजन योजना",
+  "macronutrientBalance": "मैक्रोन्यूट्रिएंट संतुलन",
+  "focusFoods": "मुख्य खाद्य पदार्थ",
+  "keyRecommendations": "मुख्य सिफारिशें",
+  "bmiScale": "BMI स्केल",
+  "reCalculate": "पुनः गणना",
+  "resultCopied": "परिणाम क्लिपबोर्ड पर कॉपी हुआ!",
+  "copyToClipboard": "क्लिपबोर्ड पर कॉपी करें",
+  "moreRecommendations": "... और {count} अधिक सिफारिशें",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "मेरा BMI {bmi} है — {category}\n{interpretation}\nBMI Calculator App से ट्रैक किया",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "गंभीर रूप से कम वजन",
+  "bmiUnderweight": "कम वजन",
+  "bmiNormalWeight": "सामान्य वजन",
+  "bmiOverweight": "अधिक वजन",
+  "bmiObeseI": "मोटापा कक्षा I",
+  "bmiObeseII": "मोटापा कक्षा II",
+  "bmiSeverelyObese": "गंभीर मोटापा",
+
+  "profile": "प्रोफ़ाइल",
+  "edit": "संपादित करें",
+  "cancel": "रद्द करें",
+  "save": "सहेजें",
+  "guestUser": "अतिथि उपयोगकर्ता",
+  "guestModeLocal": "अतिथि मोड · डेटा स्थानीय रूप से संग्रहीत",
+  "guestModeBanner": "अतिथि मोड — डेटा केवल स्थानीय रूप से संग्रहीत है। डिवाइस में सिंक करने के लिए खाता बनाएं।",
+  "personalInformation": "व्यक्तिगत जानकारी",
+  "fullName": "पूरा नाम",
+  "email": "ईमेल",
+  "phone": "फोन",
+  "notAvailable": "उपलब्ध नहीं",
+  "account": "खाता",
+  "totalChecks": "कुल जांच",
+  "averageBmi": "औसत BMI",
+  "createAccount": "खाता बनाएं",
+  "signIn": "साइन इन करें",
+  "changePassword": "पासवर्ड बदलें",
+  "deleteAccount": "खाता हटाएं",
+  "leaveGuestMode": "अतिथि मोड छोड़ें",
+  "signOut": "साइन आउट करें",
+  "profileUpdated": "प्रोफ़ाइल अपडेट हुई",
+  "leaveGuestTitle": "अतिथि मोड छोड़ें?",
+  "signOutTitle": "साइन आउट करें?",
+  "leaveGuestContent": "आपका स्थानीय डेटा मिट जाएगा। इतिहास रखने के लिए साइन इन करें या खाता बनाएं।",
+  "signOutContent": "आप किसी भी समय वापस साइन इन कर सकते हैं।",
+  "leave": "छोड़ें",
+  "deleteAccountTitle": "खाता हटाएं?",
+  "deleteAccountContent": "इससे आपका खाता और सभी डेटा स्थायी रूप से हट जाएगा। यह क्रिया पूर्ववत नहीं की जा सकती।",
+  "delete": "हटाएं",
+  "language": "भाषा",
+  "selectLanguage": "भाषा चुनें",
+
+  "welcomeBack": "वापसी पर स्वागत है",
+  "signInToContinue": "जारी रखने के लिए साइन इन करें",
+  "emailAddress": "ईमेल पता",
+  "password": "पासवर्ड",
+  "forgotPassword": "पासवर्ड भूल गए?",
+  "continueAsGuest": "अतिथि के रूप में जारी रखें",
+  "dontHaveAccount": "खाता नहीं है?",
+  "createOne": "बनाएं",
+  "emailRequired": "ईमेल आवश्यक है",
+  "emailInvalid": "एक मान्य ईमेल पता दर्ज करें",
+  "passwordRequired": "पासवर्ड आवश्यक है",
+  "passwordTooShort": "पासवर्ड कम से कम 6 अक्षर का होना चाहिए",
+
+  "createAccountTitle": "खाता बनाएं",
+  "startTrackingToday": "आज से अपनी स्वास्थ्य ट्रैकिंग शुरू करें",
+  "phoneNumber": "फोन नंबर",
+  "confirmPassword": "पासवर्ड की पुष्टि करें",
+  "alreadyHaveAccount": "पहले से खाता है?",
+  "signInLink": "साइन इन करें",
+  "nameRequired": "नाम आवश्यक है",
+  "nameShort": "अपना पूरा नाम दर्ज करें",
+  "phoneRequired": "फोन नंबर आवश्यक है",
+  "phoneInvalid": "एक मान्य फोन नंबर दर्ज करें",
+  "confirmPasswordRequired": "कृपया पासवर्ड की पुष्टि करें",
+  "passwordsDoNotMatch": "पासवर्ड मेल नहीं खाते",
+  "passwordStrengthLabel": "पासवर्ड की मजबूती: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "कमजोर",
+  "passwordMedium": "मध्यम",
+  "passwordStrong": "मजबूत",
+
+  "resetPasswordTitle": "पासवर्ड रीसेट करें",
+  "resetPasswordSubtitle": "अपना ईमेल पता दर्ज करें और हम आपको पासवर्ड रीसेट लिंक भेजेंगे।",
+  "sendResetLink": "रीसेट लिंक भेजें",
+  "checkInbox": "अपना इनबॉक्स जांचें",
+  "resetLinkSentTo": "हमने पासवर्ड रीसेट लिंक भेजा\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "साइन इन पर वापस जाएं",
+
+  "noHistoryYet": "अभी तक कोई इतिहास नहीं",
+  "noHistorySubtitle": "होम टैब पर BMI कैलकुलेट करें और आपका इतिहास यहां दिखेगा।",
+  "today": "आज",
+  "yesterday": "कल",
+  "yourProgress": "आपकी प्रगति",
+  "entriesCount": "{count} प्रविष्टियां",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count} प्रविष्टि",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "औसत",
+  "lowest": "न्यूनतम",
+  "highest": "अधिकतम",
+  "trend": "रुझान",
+  "deleteRecordTitle": "रिकॉर्ड हटाएं?",
+  "deleteRecordContent": "यह BMI रिकॉर्ड स्थायी रूप से हटा दिया जाएगा।",
+  "failedToLoadHistory": "इतिहास लोड करने में विफल",
+  "retry": "पुनः प्रयास करें",
+
+  "avgBmi": "औसत BMI",
+  "latestBmi": "नवीनतम BMI",
+  "bestBmi": "सर्वश्रेष्ठ BMI",
+  "bmiTrend": "BMI रुझान",
+  "lastNMeasurements": "अंतिम {count} माप",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "श्रेणी वितरण",
+  "basedOnAllRecords": "{count} रिकॉर्ड के आधार पर",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "हाल के माप",
+  "last5Entries": "अंतिम 5 प्रविष्टियां",
+  "noDataYet": "अभी तक कोई डेटा नहीं",
+  "noDataSubtitle": "BMI ट्रैक करना शुरू करें और आपके आंकड़े यहां दिखेंगे।"
+}

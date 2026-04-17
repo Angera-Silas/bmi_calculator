@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../constants.dart';
+import '../generated/l10n/app_localizations.dart';
 import '../services/session_service.dart';
 import 'input_home.dart';
 import 'input_history.dart';
@@ -16,10 +17,10 @@ class InputPage extends StatefulWidget {
 class _InputPageState extends State<InputPage> {
   int _selectedIndex = 0;
 
-  final List<_TabConfig> _tabs = const [
-    _TabConfig(label: 'Calculate', icon: Icons.monitor_weight_outlined, activeIcon: Icons.monitor_weight),
-    _TabConfig(label: 'History', icon: Icons.history_outlined, activeIcon: Icons.history),
-    _TabConfig(label: 'Insights', icon: Icons.insights_outlined, activeIcon: Icons.insights),
+  static const _tabIcons = [
+    (icon: Icons.monitor_weight_outlined, activeIcon: Icons.monitor_weight),
+    (icon: Icons.history_outlined, activeIcon: Icons.history),
+    (icon: Icons.insights_outlined, activeIcon: Icons.insights),
   ];
 
   late final List<Widget> _pages = const [
@@ -30,7 +31,9 @@ class _InputPageState extends State<InputPage> {
 
   @override
   Widget build(BuildContext context) {
-    final page = _tabs[_selectedIndex];
+    final l10n = AppLocalizations.of(context);
+    final tabLabels = [l10n.tabCalculate, l10n.tabHistory, l10n.tabInsights];
+    final subtitles = [l10n.subtitleCalculate, l10n.subtitleHistory, l10n.subtitleInsights];
 
     return Scaffold(
       backgroundColor: DynamicColors.bg(context),
@@ -44,7 +47,7 @@ class _InputPageState extends State<InputPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              page.label,
+              tabLabels[_selectedIndex],
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -52,7 +55,7 @@ class _InputPageState extends State<InputPage> {
               ),
             ),
             Text(
-              _pageSubtitle(_selectedIndex),
+              subtitles[_selectedIndex],
               style: TextStyle(
                 fontSize: 12,
                 color: DynamicColors.textSecondary(context),
@@ -67,8 +70,8 @@ class _InputPageState extends State<InputPage> {
               margin: const EdgeInsets.only(right: kSpaceMD),
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
                   colors: [kAccent, kAccentLight],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -106,8 +109,8 @@ class _InputPageState extends State<InputPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: kSpaceSM, vertical: kSpaceXS),
             child: Row(
-              children: List.generate(_tabs.length, (i) {
-                final tab = _tabs[i];
+              children: List.generate(_tabIcons.length, (i) {
+                final tab = _tabIcons[i];
                 final active = i == _selectedIndex;
                 return Expanded(
                   child: GestureDetector(
@@ -130,7 +133,7 @@ class _InputPageState extends State<InputPage> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            tab.label,
+                            tabLabels[i],
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: active ? FontWeight.w700 : FontWeight.w500,
@@ -150,19 +153,6 @@ class _InputPageState extends State<InputPage> {
     );
   }
 
-  String _pageSubtitle(int index) {
-    switch (index) {
-      case 0:
-        return 'Enter your measurements below';
-      case 1:
-        return 'Your past BMI calculations';
-      case 2:
-        return 'Trends and analytics';
-      default:
-        return '';
-    }
-  }
-
   String _getInitials() {
     if (SessionService.isGuest) return 'G';
     final name = FirebaseAuth.instance.currentUser?.displayName ?? '';
@@ -171,16 +161,4 @@ class _InputPageState extends State<InputPage> {
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
     return name[0].toUpperCase();
   }
-}
-
-class _TabConfig {
-  final String label;
-  final IconData icon;
-  final IconData activeIcon;
-
-  const _TabConfig({
-    required this.label,
-    required this.icon,
-    required this.activeIcon,
-  });
 }

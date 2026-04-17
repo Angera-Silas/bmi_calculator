@@ -1,0 +1,207 @@
+{
+  "@@locale": "ru",
+
+  "appTitle": "Калькулятор ИМТ",
+  "appTagline": "Отслеживай · Понимай · Улучшай",
+  "trackHealthJourney": "Следите за своим здоровьем",
+
+  "tabCalculate": "Расчёт",
+  "tabHistory": "История",
+  "tabInsights": "Статистика",
+  "subtitleCalculate": "Введите ваши данные ниже",
+  "subtitleHistory": "Ваши предыдущие расчёты ИМТ",
+  "subtitleInsights": "Тенденции и аналитика",
+
+  "liveBmiPreview": "Предварительный просмотр ИМТ",
+  "metricUnits": "Метрическая (см/кг)",
+  "imperialUnits": "Имперская (фут/фунт)",
+  "biologicalSex": "Биологический пол",
+  "male": "Мужской",
+  "female": "Женский",
+  "height": "Рост",
+  "weight": "Вес",
+  "age": "Возраст",
+  "years": "лет",
+  "healthConditions": "Состояние здоровья (необязательно)",
+  "pregnancyStatus": "Статус беременности (необязательно)",
+  "prePregnancyWeight": "Вес до беременности (необязательно)",
+  "weightInKg": "Вес в кг",
+  "weightInLbs": "Вес в фунтах",
+  "calculateBmi": "Рассчитать ИМТ",
+  "selectGenderError": "Пожалуйста, выберите пол для продолжения",
+  "signInToSave": "Войдите, чтобы сохранить расчёт",
+  "shortUnderweight": "· Недовес",
+  "shortNormal": "· Норма",
+  "shortOverweight": "· Избыточный вес",
+  "shortObese": "· Ожирение",
+
+  "yourResults": "Ваши результаты",
+  "bodyMassIndex": "Индекс массы тела",
+  "whatThisMeans": "Что это означает",
+  "idealWeightRange": "Идеальный диапазон веса",
+  "minLabel": "Мин",
+  "maxLabel": "Макс",
+  "dailyCalories": "Суточные калории",
+  "kcalPerDay": "ккал/день",
+  "waterIntake": "Потребление воды",
+  "litresPerDay": "л/день",
+  "healthConsideration": "Важно для здоровья",
+  "nutritionRecommendations": "Рекомендации по питанию",
+  "dailyMealPlan": "Дневной план питания",
+  "macronutrientBalance": "Баланс макронутриентов",
+  "focusFoods": "Ключевые продукты",
+  "keyRecommendations": "Ключевые рекомендации",
+  "bmiScale": "Шкала ИМТ",
+  "reCalculate": "Пересчитать",
+  "resultCopied": "Результат скопирован в буфер обмена!",
+  "copyToClipboard": "Копировать в буфер",
+  "moreRecommendations": "... и ещё {count} рекомендаций",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "Мой ИМТ: {bmi} — {category}\n{interpretation}\nОтслежено с BMI Calculator App",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "Выраженный дефицит веса",
+  "bmiUnderweight": "Недостаточный вес",
+  "bmiNormalWeight": "Нормальный вес",
+  "bmiOverweight": "Избыточный вес",
+  "bmiObeseI": "Ожирение I степени",
+  "bmiObeseII": "Ожирение II степени",
+  "bmiSeverelyObese": "Ожирение III степени",
+
+  "profile": "Профиль",
+  "edit": "Редактировать",
+  "cancel": "Отмена",
+  "save": "Сохранить",
+  "guestUser": "Гость",
+  "guestModeLocal": "Гостевой режим · данные только локально",
+  "guestModeBanner": "Гостевой режим — данные хранятся только на устройстве. Создайте аккаунт для синхронизации.",
+  "personalInformation": "Личная информация",
+  "fullName": "Полное имя",
+  "email": "Эл. почта",
+  "phone": "Телефон",
+  "notAvailable": "Н/Д",
+  "account": "Аккаунт",
+  "totalChecks": "Всего замеров",
+  "averageBmi": "Средний ИМТ",
+  "createAccount": "Создать аккаунт",
+  "signIn": "Войти",
+  "changePassword": "Изменить пароль",
+  "deleteAccount": "Удалить аккаунт",
+  "leaveGuestMode": "Выйти из гостевого режима",
+  "signOut": "Выйти",
+  "profileUpdated": "Профиль обновлён",
+  "leaveGuestTitle": "Выйти из гостевого режима?",
+  "signOutTitle": "Выйти?",
+  "leaveGuestContent": "Локальные данные будут удалены. Войдите или создайте аккаунт, чтобы сохранить историю.",
+  "signOutContent": "Вы можете войти снова в любое время.",
+  "leave": "Выйти",
+  "deleteAccountTitle": "Удалить аккаунт?",
+  "deleteAccountContent": "Аккаунт и все данные будут удалены безвозвратно.",
+  "delete": "Удалить",
+  "language": "Язык",
+  "selectLanguage": "Выбрать язык",
+
+  "welcomeBack": "С возвращением",
+  "signInToContinue": "Войдите для продолжения",
+  "emailAddress": "Адрес эл. почты",
+  "password": "Пароль",
+  "forgotPassword": "Забыли пароль?",
+  "continueAsGuest": "Продолжить как гость",
+  "dontHaveAccount": "Нет аккаунта?",
+  "createOne": "Создать",
+  "emailRequired": "Введите адрес эл. почты",
+  "emailInvalid": "Введите корректный адрес эл. почты",
+  "passwordRequired": "Введите пароль",
+  "passwordTooShort": "Пароль должен содержать не менее 6 символов",
+
+  "createAccountTitle": "Создать аккаунт",
+  "startTrackingToday": "Начните следить за здоровьем сегодня",
+  "phoneNumber": "Номер телефона",
+  "confirmPassword": "Подтвердите пароль",
+  "alreadyHaveAccount": "Уже есть аккаунт?",
+  "signInLink": "Войти",
+  "nameRequired": "Введите имя",
+  "nameShort": "Введите полное имя",
+  "phoneRequired": "Введите номер телефона",
+  "phoneInvalid": "Введите корректный номер телефона",
+  "confirmPasswordRequired": "Подтвердите пароль",
+  "passwordsDoNotMatch": "Пароли не совпадают",
+  "passwordStrengthLabel": "Надёжность пароля: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "Слабый",
+  "passwordMedium": "Средний",
+  "passwordStrong": "Надёжный",
+
+  "resetPasswordTitle": "Сброс пароля",
+  "resetPasswordSubtitle": "Введите адрес эл. почты и мы отправим ссылку для сброса пароля.",
+  "sendResetLink": "Отправить ссылку",
+  "checkInbox": "Проверьте входящие",
+  "resetLinkSentTo": "Ссылка для сброса пароля отправлена на\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "Вернуться ко входу",
+
+  "noHistoryYet": "История пуста",
+  "noHistorySubtitle": "Рассчитайте ИМТ на вкладке «Расчёт», и история появится здесь.",
+  "today": "Сегодня",
+  "yesterday": "Вчера",
+  "yourProgress": "Ваш прогресс",
+  "entriesCount": "{count} записей",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count} запись",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "Среднее",
+  "lowest": "Минимум",
+  "highest": "Максимум",
+  "trend": "Тренд",
+  "deleteRecordTitle": "Удалить запись?",
+  "deleteRecordContent": "Эта запись ИМТ будет удалена безвозвратно.",
+  "failedToLoadHistory": "Не удалось загрузить историю",
+  "retry": "Повторить",
+
+  "avgBmi": "Ср. ИМТ",
+  "latestBmi": "Последний ИМТ",
+  "bestBmi": "Лучший ИМТ",
+  "bmiTrend": "Тренд ИМТ",
+  "lastNMeasurements": "Последние {count} измерений",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "Распределение по категориям",
+  "basedOnAllRecords": "На основе {count} записей",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "Последние измерения",
+  "last5Entries": "Последние 5 записей",
+  "noDataYet": "Нет данных",
+  "noDataSubtitle": "Начните отслеживать ИМТ, и статистика появится здесь."
+}

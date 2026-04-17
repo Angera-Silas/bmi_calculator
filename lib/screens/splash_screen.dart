@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
+import '../generated/l10n/app_localizations.dart';
 import '../services/session_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -89,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: kSpaceLG),
               Text(
-                'BMI Calculator',
+                AppLocalizations.of(context).appTitle,
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -99,7 +100,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
               const SizedBox(height: kSpaceXS),
               Text(
-                'Track · Understand · Improve',
+                AppLocalizations.of(context).appTagline,
                 style: TextStyle(
                   fontSize: 14,
                   color: DynamicColors.textSecondary(context),

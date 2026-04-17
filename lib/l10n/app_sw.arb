@@ -1,0 +1,207 @@
+{
+  "@@locale": "sw",
+
+  "appTitle": "Kikokotoo cha BMI",
+  "appTagline": "Fuatilia · Elewa · Boresha",
+  "trackHealthJourney": "Fuatilia safari yako ya afya",
+
+  "tabCalculate": "Hesabu",
+  "tabHistory": "Historia",
+  "tabInsights": "Takwimu",
+  "subtitleCalculate": "Ingiza vipimo vyako hapa chini",
+  "subtitleHistory": "Mahesabu yako ya BMI yaliyopita",
+  "subtitleInsights": "Mwenendo na uchambuzi",
+
+  "liveBmiPreview": "Muonekano wa BMI moja kwa moja",
+  "metricUnits": "Metriki (cm/kg)",
+  "imperialUnits": "Imperial (ft/lbs)",
+  "biologicalSex": "Jinsia ya kibiolojia",
+  "male": "Mwanaume",
+  "female": "Mwanamke",
+  "height": "Urefu",
+  "weight": "Uzito",
+  "age": "Umri",
+  "years": "maka",
+  "healthConditions": "Hali za kiafya (si lazima)",
+  "pregnancyStatus": "Hali ya ujauzito (si lazima)",
+  "prePregnancyWeight": "Uzito kabla ya ujauzito (si lazima)",
+  "weightInKg": "Uzito kwa kg",
+  "weightInLbs": "Uzito kwa lbs",
+  "calculateBmi": "Hesabu BMI",
+  "selectGenderError": "Tafadhali chagua jinsia yako ili kuendelea",
+  "signInToSave": "Tafadhali ingia ili kuhifadhi hesabu yako",
+  "shortUnderweight": "· Uzito mdogo",
+  "shortNormal": "· Kawaida",
+  "shortOverweight": "· Uzito mwingi",
+  "shortObese": "· Unene",
+
+  "yourResults": "Matokeo Yako",
+  "bodyMassIndex": "Kiindeksi cha Uzito wa Mwili",
+  "whatThisMeans": "Hii inamaanisha nini",
+  "idealWeightRange": "Anuwai ya Uzito Bora",
+  "minLabel": "Kiwango cha chini",
+  "maxLabel": "Kiwango cha juu",
+  "dailyCalories": "Kalori za Kila Siku",
+  "kcalPerDay": "kcal/siku",
+  "waterIntake": "Ulaji wa Maji",
+  "litresPerDay": "lita/siku",
+  "healthConsideration": "Onyo la Kiafya",
+  "nutritionRecommendations": "Mapendekezo ya Lishe",
+  "dailyMealPlan": "Mpango wa Chakula wa Kila Siku",
+  "macronutrientBalance": "Usawa wa Virutubisho Vikuu",
+  "focusFoods": "Vyakula vya Msingi",
+  "keyRecommendations": "Mapendekezo Muhimu",
+  "bmiScale": "Kiwango cha BMI",
+  "reCalculate": "Hesabu Tena",
+  "resultCopied": "Matokeo yamenakiliwa kwenye ubao wa kunakili!",
+  "copyToClipboard": "Nakili kwenye ubao wa kunakili",
+  "moreRecommendations": "... na mapendekezo {count} zaidi",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "BMI yangu ni {bmi} — {category}\n{interpretation}\nImefuatiliwa na BMI Calculator App",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "Uzito Mdogo Sana",
+  "bmiUnderweight": "Uzito Mdogo",
+  "bmiNormalWeight": "Uzito wa Kawaida",
+  "bmiOverweight": "Uzito Mwingi",
+  "bmiObeseI": "Unene Daraja I",
+  "bmiObeseII": "Unene Daraja II",
+  "bmiSeverelyObese": "Unene Mkubwa Sana",
+
+  "profile": "Wasifu",
+  "edit": "Hariri",
+  "cancel": "Ghairi",
+  "save": "Hifadhi",
+  "guestUser": "Mtumiaji Mgeni",
+  "guestModeLocal": "Hali ya mgeni · data imehifadhiwa ndani ya kifaa",
+  "guestModeBanner": "Hali ya mgeni — data imehifadhiwa ndani ya kifaa tu. Fungua akaunti ili kusawazisha kwenye vifaa vyote.",
+  "personalInformation": "Taarifa za Kibinafsi",
+  "fullName": "Jina kamili",
+  "email": "Barua pepe",
+  "phone": "Simu",
+  "notAvailable": "Haipatikani",
+  "account": "Akaunti",
+  "totalChecks": "Jumla ya Ukaguzi",
+  "averageBmi": "BMI ya Wastani",
+  "createAccount": "Fungua Akaunti",
+  "signIn": "Ingia",
+  "changePassword": "Badilisha Nenosiri",
+  "deleteAccount": "Futa Akaunti",
+  "leaveGuestMode": "Acha Hali ya Mgeni",
+  "signOut": "Toka",
+  "profileUpdated": "Wasifu umesasishwa",
+  "leaveGuestTitle": "Acha hali ya mgeni?",
+  "signOutTitle": "Toka?",
+  "leaveGuestContent": "Data yako ya ndani itafutwa. Ingia au fungua akaunti ili kuhifadhi historia yako.",
+  "signOutContent": "Unaweza kuingia tena wakati wowote.",
+  "leave": "Acha",
+  "deleteAccountTitle": "Futa akaunti?",
+  "deleteAccountContent": "Hii itafuta akaunti yako na data yote kwa kudumu. Haiwezi kurejeshwa.",
+  "delete": "Futa",
+  "language": "Lugha",
+  "selectLanguage": "Chagua lugha",
+
+  "welcomeBack": "Karibu tena",
+  "signInToContinue": "Ingia ili kuendelea",
+  "emailAddress": "Anwani ya barua pepe",
+  "password": "Nenosiri",
+  "forgotPassword": "Umesahau nenosiri?",
+  "continueAsGuest": "Endelea kama mgeni",
+  "dontHaveAccount": "Huna akaunti?",
+  "createOne": "Fungua moja",
+  "emailRequired": "Barua pepe inahitajika",
+  "emailInvalid": "Ingiza anwani sahihi ya barua pepe",
+  "passwordRequired": "Nenosiri linahitajika",
+  "passwordTooShort": "Nenosiri lazima liwe na angalau herufi 6",
+
+  "createAccountTitle": "Fungua Akaunti",
+  "startTrackingToday": "Anza kufuatilia afya yako leo",
+  "phoneNumber": "Nambari ya simu",
+  "confirmPassword": "Thibitisha nenosiri",
+  "alreadyHaveAccount": "Tayari una akaunti?",
+  "signInLink": "Ingia",
+  "nameRequired": "Jina linahitajika",
+  "nameShort": "Ingiza jina lako kamili",
+  "phoneRequired": "Nambari ya simu inahitajika",
+  "phoneInvalid": "Ingiza nambari sahihi ya simu",
+  "confirmPasswordRequired": "Tafadhali thibitisha nenosiri lako",
+  "passwordsDoNotMatch": "Manenosiri hayafanani",
+  "passwordStrengthLabel": "Nguvu ya nenosiri: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "Dhaifu",
+  "passwordMedium": "Wastani",
+  "passwordStrong": "Imara",
+
+  "resetPasswordTitle": "Weka Upya Nenosiri",
+  "resetPasswordSubtitle": "Ingiza barua pepe yako na tutakutumia kiungo cha kuweka upya nenosiri.",
+  "sendResetLink": "Tuma Kiungo",
+  "checkInbox": "Angalia sanduku lako la barua pepe",
+  "resetLinkSentTo": "Tumetuma kiungo cha kuweka upya nenosiri kwa\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "Rudi kuingia",
+
+  "noHistoryYet": "Hakuna historia bado",
+  "noHistorySubtitle": "Hesabu BMI yako kwenye kichupo cha Nyumbani na historia yako itaonekana hapa.",
+  "today": "Leo",
+  "yesterday": "Jana",
+  "yourProgress": "Maendeleo Yako",
+  "entriesCount": "maingizo {count}",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "kuingiza {count}",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "Wastani",
+  "lowest": "Chini",
+  "highest": "Juu",
+  "trend": "Mwenendo",
+  "deleteRecordTitle": "Futa rekodi?",
+  "deleteRecordContent": "Rekodi hii ya BMI itafutwa kwa kudumu.",
+  "failedToLoadHistory": "Imeshindwa kupakia historia",
+  "retry": "Jaribu tena",
+
+  "avgBmi": "BMI ya wastani",
+  "latestBmi": "BMI ya hivi karibuni",
+  "bestBmi": "BMI Bora",
+  "bmiTrend": "Mwenendo wa BMI",
+  "lastNMeasurements": "Vipimo {count} vya mwisho",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "Usambazaji wa Makundi",
+  "basedOnAllRecords": "Kulingana na rekodi {count} zote",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "Vipimo vya Hivi Karibuni",
+  "last5Entries": "Maingizo 5 ya mwisho",
+  "noDataYet": "Hakuna data bado",
+  "noDataSubtitle": "Anza kufuatilia BMI yako na takwimu zako zitaonekana hapa."
+}

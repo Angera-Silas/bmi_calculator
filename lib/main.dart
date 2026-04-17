@@ -2,8 +2,10 @@ import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
+import 'generated/l10n/app_localizations.dart';
 import 'login_page.dart';
 import 'registration_page.dart';
 import 'reset_password.dart';
@@ -11,6 +13,7 @@ import 'screens/input_page.dart';
 import 'screens/profile.dart';
 import 'screens/splash_screen.dart';
 import 'database/app_database.dart';
+import 'services/locale_service.dart';
 import 'services/session_service.dart';
 import 'services/sync_service.dart';
 import 'services/connectivity_service.dart';
@@ -44,11 +47,40 @@ void main() async {
     }
   });
 
-  runApp(const BMICalculatorApp());
+  // Load persisted locale before starting app
+  final savedLocale = await LocaleService.getLocale();
+
+  runApp(BMICalculatorApp(initialLocale: savedLocale));
 }
 
-class BMICalculatorApp extends StatelessWidget {
-  const BMICalculatorApp({super.key});
+class BMICalculatorApp extends StatefulWidget {
+  const BMICalculatorApp({super.key, this.initialLocale});
+
+  final Locale? initialLocale;
+
+  /// Call from anywhere to change the app locale at runtime.
+  static void setLocale(BuildContext context, Locale locale) {
+    final state = context.findAncestorStateOfType<_BMICalculatorAppState>();
+    state?._setLocale(locale);
+  }
+
+  @override
+  State<BMICalculatorApp> createState() => _BMICalculatorAppState();
+}
+
+class _BMICalculatorAppState extends State<BMICalculatorApp> {
+  late Locale? _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _locale = widget.initialLocale;
+  }
+
+  void _setLocale(Locale locale) {
+    setState(() => _locale = locale);
+    LocaleService.saveLocale(locale.languageCode);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +88,30 @@ class BMICalculatorApp extends StatelessWidget {
       title: 'BMI Calculator',
       debugShowCheckedModeBanner: false,
       themeMode: ThemeMode.system,
+
+      // ── Localisation ────────────────────────────────────────────────────
+      locale: _locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('es'),
+        Locale('fr'),
+        Locale('ar'),
+        Locale('hi'),
+        Locale('zh'),
+        Locale('pt'),
+        Locale('ru'),
+        Locale('bn'),
+        Locale('id'),
+        Locale('de'),
+        Locale('sw'),
+        Locale('ha'),
+      ],
 
       // ── Light Theme ───────────────────────────────────────────────────────
       theme: ThemeData(

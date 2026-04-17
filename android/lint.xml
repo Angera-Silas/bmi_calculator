@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Project-level lint configuration — applies to all modules (AGP inherits this
+  from the project root directory).
+
+  KotlinNullnessAnnotation: firebase_storage-13.2.0 uses @Nullable on a Kotlin
+  parameter in FlutterFirebaseStorageException.kt. The annotation is harmless
+  but AGP 8.x lint now flags it as an error. Suppress here until the upstream
+  package ships a fix.
+-->
+<lint>
+    <issue id="KotlinNullnessAnnotation" severity="ignore" />
+</lint>

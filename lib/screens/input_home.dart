@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../calculator_brain.dart';
 import '../constants.dart';
+import '../generated/l10n/app_localizations.dart';
 import '../models/bmi_record.dart';
 import '../models/user_profile.dart';
 import '../models/health_condition.dart';
@@ -32,7 +33,7 @@ class _InputHomeState extends State<InputHome> {
   int _age = 25;
   
   // New health fields
-  List<HealthCondition> _selectedConditions = [];
+  final List<HealthCondition> _selectedConditions = [];
   PregnancyStatus _pregnancyStatus = PregnancyStatus.notApplicable;
   double? _prePregnancyWeight;
 
@@ -63,7 +64,7 @@ class _InputHomeState extends State<InputHome> {
     if (_selectedGender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please select your gender to continue'),
+          content: Text(AppLocalizations.of(context).selectGenderError),
           backgroundColor: kWarningColor,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
@@ -91,8 +92,8 @@ class _InputHomeState extends State<InputHome> {
     if (userId == null) {
       // Should not happen - splash screen handles this, but safety check
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please sign in to save your calculation'),
+        SnackBar(
+          content: Text(AppLocalizations.of(context).signInToSave),
           backgroundColor: kErrorColor,
         ),
       );
@@ -165,23 +166,25 @@ class _InputHomeState extends State<InputHome> {
               _UnitToggle(
                 isMetric: _isMetric,
                 onToggle: (v) => setState(() => _isMetric = v),
+                metricLabel: AppLocalizations.of(context).metricUnits,
+                imperialLabel: AppLocalizations.of(context).imperialUnits,
               ),
               const SizedBox(height: kSpaceMD),
 
               // ── Gender ────────────────────────────────────────────────────
-              _SectionLabel(label: 'Biological sex'),
+              _SectionLabel(label: AppLocalizations.of(context).biologicalSex),
               const SizedBox(height: kSpaceSM),
               Row(
                 children: [
                   _GenderCard(
-                    label: 'Male',
+                    label: AppLocalizations.of(context).male,
                     icon: FontAwesomeIcons.mars,
                     selected: _selectedGender == Gender.male,
                     onTap: () => setState(() => _selectedGender = Gender.male),
                   ),
                   const SizedBox(width: kSpaceSM),
                   _GenderCard(
-                    label: 'Female',
+                    label: AppLocalizations.of(context).female,
                     icon: FontAwesomeIcons.venus,
                     selected: _selectedGender == Gender.female,
                     onTap: () => setState(() => _selectedGender = Gender.female),
@@ -191,7 +194,7 @@ class _InputHomeState extends State<InputHome> {
               const SizedBox(height: kSpaceMD),
 
               // ── Height ────────────────────────────────────────────────────
-              _SectionLabel(label: 'Height'),
+              _SectionLabel(label: AppLocalizations.of(context).height),
               const SizedBox(height: kSpaceSM),
               _MetricCard(
                 child: Column(
@@ -248,7 +251,7 @@ class _InputHomeState extends State<InputHome> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _SectionLabel(label: 'Weight'),
+                        _SectionLabel(label: AppLocalizations.of(context).weight),
                         const SizedBox(height: kSpaceSM),
                         _MetricCard(
                           child: Column(
@@ -296,7 +299,7 @@ class _InputHomeState extends State<InputHome> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _SectionLabel(label: 'Age'),
+                        _SectionLabel(label: AppLocalizations.of(context).age),
                         const SizedBox(height: kSpaceSM),
                         _MetricCard(
                           child: Column(
@@ -315,7 +318,7 @@ class _InputHomeState extends State<InputHome> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'yrs',
+                                    AppLocalizations.of(context).years,
                                     style: TextStyle(
                                       color: DynamicColors.textSecondary(context),
                                       fontSize: 14,
@@ -344,7 +347,7 @@ class _InputHomeState extends State<InputHome> {
               const SizedBox(height: kSpaceMD),
 
               // ── Health Conditions ────────────────────────────────────────────
-              _SectionLabel(label: 'Health Conditions (Optional)'),
+              _SectionLabel(label: AppLocalizations.of(context).healthConditions),
               const SizedBox(height: kSpaceSM),
               _buildHealthConditionsSection(),
               const SizedBox(height: kSpaceMD),
@@ -354,7 +357,7 @@ class _InputHomeState extends State<InputHome> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SectionLabel(label: 'Pregnancy Status (Optional)'),
+                    _SectionLabel(label: AppLocalizations.of(context).pregnancyStatus),
                     const SizedBox(height: kSpaceSM),
                     _buildPregnancySection(),
                     const SizedBox(height: kSpaceMD),
@@ -392,7 +395,7 @@ class _InputHomeState extends State<InputHome> {
                         height: 20,
                         child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                       )
-                    : const Text('Calculate BMI', style: kLargeButtonTextStyle),
+                    : Text(AppLocalizations.of(context).calculateBmi, style: kLargeButtonTextStyle),
               ),
             ),
           ),
@@ -416,7 +419,7 @@ class _InputHomeState extends State<InputHome> {
           Icon(Icons.monitor_heart_outlined, color: color, size: 18),
           const SizedBox(width: kSpaceSM),
           Text(
-            'Live BMI Preview',
+            AppLocalizations.of(context).liveBmiPreview,
             style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 13),
           ),
           const Spacer(),
@@ -430,7 +433,7 @@ class _InputHomeState extends State<InputHome> {
           ),
           const SizedBox(width: 6),
           Text(
-            bmi == '--' ? '' : _getShortCategory(double.tryParse(bmi) ?? 0),
+            bmi == '--' ? '' : _getShortCategory(context, double.tryParse(bmi) ?? 0),
             style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
@@ -438,11 +441,12 @@ class _InputHomeState extends State<InputHome> {
     );
   }
 
-  String _getShortCategory(double bmi) {
-    if (bmi < 18.5) return '· Underweight';
-    if (bmi < 25) return '· Normal';
-    if (bmi < 30) return '· Overweight';
-    return '· Obese';
+  String _getShortCategory(BuildContext context, double bmi) {
+    final l10n = AppLocalizations.of(context);
+    if (bmi < 18.5) return l10n.shortUnderweight;
+    if (bmi < 25) return l10n.shortNormal;
+    if (bmi < 30) return l10n.shortOverweight;
+    return l10n.shortObese;
   }
 
   Widget _buildHealthConditionsSection() {
@@ -520,7 +524,7 @@ class _InputHomeState extends State<InputHome> {
                     children: [
                       const SizedBox(height: kSpaceSM),
                       Text(
-                        'Pre-pregnancy weight (optional)',
+                        AppLocalizations.of(context).prePregnancyWeight,
                         style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
                       ),
                       const SizedBox(height: kSpaceSM),
@@ -532,7 +536,9 @@ class _InputHomeState extends State<InputHome> {
                           });
                         },
                         decoration: InputDecoration(
-                          hintText: 'Weight in ${_isMetric ? 'kg' : 'lbs'}',
+                          hintText: _isMetric
+                              ? AppLocalizations.of(context).weightInKg
+                              : AppLocalizations.of(context).weightInLbs,
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: kSpaceSM, vertical: kSpaceSM),
                         ),
@@ -583,7 +589,7 @@ class _MetricCard extends StatelessWidget {
 
 class _GenderCard extends StatelessWidget {
   final String label;
-  final IconData icon;
+  final FaIconData icon;
   final bool selected;
   final VoidCallback onTap;
 
@@ -613,7 +619,7 @@ class _GenderCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              FaIcon(
                 icon,
                 color: selected ? kAccent : DynamicColors.iconColor(context),
                 size: 28,
@@ -639,8 +645,15 @@ class _GenderCard extends StatelessWidget {
 class _UnitToggle extends StatelessWidget {
   final bool isMetric;
   final ValueChanged<bool> onToggle;
+  final String metricLabel;
+  final String imperialLabel;
 
-  const _UnitToggle({required this.isMetric, required this.onToggle});
+  const _UnitToggle({
+    required this.isMetric,
+    required this.onToggle,
+    required this.metricLabel,
+    required this.imperialLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -653,8 +666,8 @@ class _UnitToggle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Tab(label: 'Metric (cm/kg)', active: isMetric, onTap: () => onToggle(true)),
-          _Tab(label: 'Imperial (ft/lbs)', active: !isMetric, onTap: () => onToggle(false)),
+          _Tab(label: metricLabel, active: isMetric, onTap: () => onToggle(true)),
+          _Tab(label: imperialLabel, active: !isMetric, onTap: () => onToggle(false)),
         ],
       ),
     );

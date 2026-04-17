@@ -1,0 +1,207 @@
+{
+  "@@locale": "zh",
+
+  "appTitle": "BMI计算器",
+  "appTagline": "跟踪 · 了解 · 改善",
+  "trackHealthJourney": "跟踪您的健康之旅",
+
+  "tabCalculate": "计算",
+  "tabHistory": "历史",
+  "tabInsights": "统计",
+  "subtitleCalculate": "在下方输入您的数据",
+  "subtitleHistory": "您的历次BMI计算",
+  "subtitleInsights": "趋势与分析",
+
+  "liveBmiPreview": "BMI实时预览",
+  "metricUnits": "公制 (cm/kg)",
+  "imperialUnits": "英制 (ft/lbs)",
+  "biologicalSex": "生理性别",
+  "male": "男",
+  "female": "女",
+  "height": "身高",
+  "weight": "体重",
+  "age": "年龄",
+  "years": "岁",
+  "healthConditions": "健康状况（可选）",
+  "pregnancyStatus": "怀孕状态（可选）",
+  "prePregnancyWeight": "孕前体重（可选）",
+  "weightInKg": "体重（千克）",
+  "weightInLbs": "体重（磅）",
+  "calculateBmi": "计算BMI",
+  "selectGenderError": "请选择性别以继续",
+  "signInToSave": "请登录以保存计算结果",
+  "shortUnderweight": "· 体重不足",
+  "shortNormal": "· 正常",
+  "shortOverweight": "· 超重",
+  "shortObese": "· 肥胖",
+
+  "yourResults": "您的结果",
+  "bodyMassIndex": "身体质量指数",
+  "whatThisMeans": "这意味着什么",
+  "idealWeightRange": "理想体重范围",
+  "minLabel": "最小",
+  "maxLabel": "最大",
+  "dailyCalories": "每日卡路里",
+  "kcalPerDay": "千卡/天",
+  "waterIntake": "每日饮水量",
+  "litresPerDay": "升/天",
+  "healthConsideration": "健康注意事项",
+  "nutritionRecommendations": "营养建议",
+  "dailyMealPlan": "每日饮食计划",
+  "macronutrientBalance": "宏量营养素平衡",
+  "focusFoods": "重点食物",
+  "keyRecommendations": "关键建议",
+  "bmiScale": "BMI量表",
+  "reCalculate": "重新计算",
+  "resultCopied": "结果已复制到剪贴板！",
+  "copyToClipboard": "复制到剪贴板",
+  "moreRecommendations": "...还有{count}条建议",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "我的BMI是{bmi} — {category}\n{interpretation}\n通过BMI Calculator App记录",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "严重体重不足",
+  "bmiUnderweight": "体重不足",
+  "bmiNormalWeight": "正常体重",
+  "bmiOverweight": "超重",
+  "bmiObeseI": "肥胖I级",
+  "bmiObeseII": "肥胖II级",
+  "bmiSeverelyObese": "极度肥胖",
+
+  "profile": "个人资料",
+  "edit": "编辑",
+  "cancel": "取消",
+  "save": "保存",
+  "guestUser": "访客用户",
+  "guestModeLocal": "访客模式 · 数据仅存储在本地",
+  "guestModeBanner": "访客模式 — 数据仅存储在本地。创建账号以在设备间同步。",
+  "personalInformation": "个人信息",
+  "fullName": "全名",
+  "email": "电子邮件",
+  "phone": "电话",
+  "notAvailable": "N/A",
+  "account": "账户",
+  "totalChecks": "总检测次数",
+  "averageBmi": "平均BMI",
+  "createAccount": "创建账号",
+  "signIn": "登录",
+  "changePassword": "更改密码",
+  "deleteAccount": "删除账号",
+  "leaveGuestMode": "退出访客模式",
+  "signOut": "退出登录",
+  "profileUpdated": "个人资料已更新",
+  "leaveGuestTitle": "退出访客模式？",
+  "signOutTitle": "退出登录？",
+  "leaveGuestContent": "您的本地数据将被清除。登录或创建账号以保留您的历史记录。",
+  "signOutContent": "您可以随时重新登录以访问同步数据。",
+  "leave": "离开",
+  "deleteAccountTitle": "删除账号？",
+  "deleteAccountContent": "这将永久删除您的账号和所有数据，此操作无法撤销。",
+  "delete": "删除",
+  "language": "语言",
+  "selectLanguage": "选择语言",
+
+  "welcomeBack": "欢迎回来",
+  "signInToContinue": "登录以继续",
+  "emailAddress": "电子邮件地址",
+  "password": "密码",
+  "forgotPassword": "忘记密码？",
+  "continueAsGuest": "以访客身份继续",
+  "dontHaveAccount": "没有账号？",
+  "createOne": "创建一个",
+  "emailRequired": "电子邮件为必填项",
+  "emailInvalid": "请输入有效的电子邮件地址",
+  "passwordRequired": "密码为必填项",
+  "passwordTooShort": "密码至少需要6个字符",
+
+  "createAccountTitle": "创建账号",
+  "startTrackingToday": "今天开始追踪您的健康",
+  "phoneNumber": "电话号码",
+  "confirmPassword": "确认密码",
+  "alreadyHaveAccount": "已有账号？",
+  "signInLink": "登录",
+  "nameRequired": "姓名为必填项",
+  "nameShort": "请输入您的全名",
+  "phoneRequired": "电话号码为必填项",
+  "phoneInvalid": "请输入有效的电话号码",
+  "confirmPasswordRequired": "请确认您的密码",
+  "passwordsDoNotMatch": "两次输入的密码不匹配",
+  "passwordStrengthLabel": "密码强度：{level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "弱",
+  "passwordMedium": "中",
+  "passwordStrong": "强",
+
+  "resetPasswordTitle": "重置密码",
+  "resetPasswordSubtitle": "输入您的电子邮件地址，我们将发送重置密码链接。",
+  "sendResetLink": "发送重置链接",
+  "checkInbox": "查看您的收件箱",
+  "resetLinkSentTo": "我们已发送密码重置链接至\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "返回登录",
+
+  "noHistoryYet": "暂无历史记录",
+  "noHistorySubtitle": "在首页计算您的BMI，历史记录将显示在此处。",
+  "today": "今天",
+  "yesterday": "昨天",
+  "yourProgress": "您的进度",
+  "entriesCount": "{count}条记录",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count}条记录",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "平均",
+  "lowest": "最低",
+  "highest": "最高",
+  "trend": "趋势",
+  "deleteRecordTitle": "删除记录？",
+  "deleteRecordContent": "此BMI记录将被永久删除。",
+  "failedToLoadHistory": "加载历史记录失败",
+  "retry": "重试",
+
+  "avgBmi": "平均BMI",
+  "latestBmi": "最新BMI",
+  "bestBmi": "最佳BMI",
+  "bmiTrend": "BMI趋势",
+  "lastNMeasurements": "最近{count}次测量",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "类别分布",
+  "basedOnAllRecords": "基于全部{count}条记录",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "最近测量",
+  "last5Entries": "最近5条",
+  "noDataYet": "暂无数据",
+  "noDataSubtitle": "开始追踪您的BMI，统计数据将显示在此处。"
+}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'constants.dart';
+import 'generated/l10n/app_localizations.dart';
 import 'services/auth_service.dart';
 
 class ResetPassword extends StatefulWidget {
@@ -92,7 +93,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                   ),
                   const SizedBox(height: kSpaceLG),
                   Text(
-                    'Reset Password',
+                    AppLocalizations.of(context).resetPasswordTitle,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
@@ -101,7 +102,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                   ),
                   const SizedBox(height: kSpaceXS),
                   Text(
-                    'Enter your email address and we\'ll send you a link to reset your password.',
+                    AppLocalizations.of(context).resetPasswordSubtitle,
                     style: TextStyle(
                       color: DynamicColors.textSecondary(context),
                       fontSize: 14,
@@ -111,7 +112,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                   const SizedBox(height: kSpaceLG),
 
                   Text(
-                    'Email address',
+                    AppLocalizations.of(context).emailAddress,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -152,9 +153,10 @@ class _ResetPasswordState extends State<ResetPassword> {
                       ),
                     ),
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Email is required';
+                      final l10n = AppLocalizations.of(context);
+                      if (v == null || v.trim().isEmpty) return l10n.emailRequired;
                       if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
-                        return 'Enter a valid email address';
+                        return l10n.emailInvalid;
                       }
                       return null;
                     },
@@ -181,7 +183,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                               height: 20,
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                             )
-                          : const Text('Send Reset Link', style: kLargeButtonTextStyle),
+                          : Text(AppLocalizations.of(context).sendResetLink, style: kLargeButtonTextStyle),
                     ),
                   ),
                 ] else ...[
@@ -201,7 +203,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                         ),
                         const SizedBox(height: kSpaceLG),
                         Text(
-                          'Check your inbox',
+                          AppLocalizations.of(context).checkInbox,
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.w800,
@@ -210,7 +212,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                         ),
                         const SizedBox(height: kSpaceSM),
                         Text(
-                          'We sent a password reset link to\n${_emailController.text.trim()}',
+                          AppLocalizations.of(context).resetLinkSentTo(_emailController.text.trim()),
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: DynamicColors.textSecondary(context),
@@ -232,7 +234,7 @@ class _ResetPasswordState extends State<ResetPassword> {
                               ),
                               elevation: 0,
                             ),
-                            child: const Text('Back to Sign In', style: kLargeButtonTextStyle),
+                            child: Text(AppLocalizations.of(context).backToSignIn, style: kLargeButtonTextStyle),
                           ),
                         ),
                       ],

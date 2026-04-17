@@ -1,0 +1,207 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "BMI Calculator",
+  "appTagline": "Track · Understand · Improve",
+  "trackHealthJourney": "Track your health journey",
+
+  "tabCalculate": "Calculate",
+  "tabHistory": "History",
+  "tabInsights": "Insights",
+  "subtitleCalculate": "Enter your measurements below",
+  "subtitleHistory": "Your past BMI calculations",
+  "subtitleInsights": "Trends and analytics",
+
+  "liveBmiPreview": "Live BMI Preview",
+  "metricUnits": "Metric (cm/kg)",
+  "imperialUnits": "Imperial (ft/lbs)",
+  "biologicalSex": "Biological sex",
+  "male": "Male",
+  "female": "Female",
+  "height": "Height",
+  "weight": "Weight",
+  "age": "Age",
+  "years": "yrs",
+  "healthConditions": "Health Conditions (Optional)",
+  "pregnancyStatus": "Pregnancy Status (Optional)",
+  "prePregnancyWeight": "Pre-pregnancy weight (optional)",
+  "weightInKg": "Weight in kg",
+  "weightInLbs": "Weight in lbs",
+  "calculateBmi": "Calculate BMI",
+  "selectGenderError": "Please select your gender to continue",
+  "signInToSave": "Please sign in to save your calculation",
+  "shortUnderweight": "· Underweight",
+  "shortNormal": "· Normal",
+  "shortOverweight": "· Overweight",
+  "shortObese": "· Obese",
+
+  "yourResults": "Your Results",
+  "bodyMassIndex": "Body Mass Index",
+  "whatThisMeans": "What this means",
+  "idealWeightRange": "Ideal Weight Range",
+  "minLabel": "Min",
+  "maxLabel": "Max",
+  "dailyCalories": "Daily Calories",
+  "kcalPerDay": "kcal/day",
+  "waterIntake": "Water Intake",
+  "litresPerDay": "litres/day",
+  "healthConsideration": "Health Consideration",
+  "nutritionRecommendations": "Nutrition Recommendations",
+  "dailyMealPlan": "Daily Meal Plan",
+  "macronutrientBalance": "Macronutrient Balance",
+  "focusFoods": "Focus Foods",
+  "keyRecommendations": "Key Recommendations",
+  "bmiScale": "BMI Scale",
+  "reCalculate": "Re-Calculate",
+  "resultCopied": "Result copied to clipboard!",
+  "copyToClipboard": "Copy to clipboard",
+  "moreRecommendations": "... and {count} more recommendations",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "My BMI is {bmi} — {category}\n{interpretation}\nTracked with BMI Calculator App",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "Severely Underweight",
+  "bmiUnderweight": "Underweight",
+  "bmiNormalWeight": "Normal Weight",
+  "bmiOverweight": "Overweight",
+  "bmiObeseI": "Obese Class I",
+  "bmiObeseII": "Obese Class II",
+  "bmiSeverelyObese": "Severely Obese",
+
+  "profile": "Profile",
+  "edit": "Edit",
+  "cancel": "Cancel",
+  "save": "Save",
+  "guestUser": "Guest User",
+  "guestModeLocal": "Guest mode · data stored locally",
+  "guestModeBanner": "Guest mode — data is stored locally only. Create an account to sync across devices.",
+  "personalInformation": "Personal Information",
+  "fullName": "Full name",
+  "email": "Email",
+  "phone": "Phone",
+  "notAvailable": "N/A",
+  "account": "Account",
+  "totalChecks": "Total Checks",
+  "averageBmi": "Average BMI",
+  "createAccount": "Create Account",
+  "signIn": "Sign In",
+  "changePassword": "Change Password",
+  "deleteAccount": "Delete Account",
+  "leaveGuestMode": "Leave Guest Mode",
+  "signOut": "Sign Out",
+  "profileUpdated": "Profile updated",
+  "leaveGuestTitle": "Leave guest mode?",
+  "signOutTitle": "Sign out?",
+  "leaveGuestContent": "Your local data will be cleared. Sign in or create an account to keep your history.",
+  "signOutContent": "You can sign back in any time to access your synced data.",
+  "leave": "Leave",
+  "deleteAccountTitle": "Delete account?",
+  "deleteAccountContent": "This permanently deletes your account and all data. This cannot be undone.",
+  "delete": "Delete",
+  "language": "Language",
+  "selectLanguage": "Select Language",
+
+  "welcomeBack": "Welcome back",
+  "signInToContinue": "Sign in to continue",
+  "emailAddress": "Email address",
+  "password": "Password",
+  "forgotPassword": "Forgot password?",
+  "continueAsGuest": "Continue as Guest",
+  "dontHaveAccount": "Don't have an account?",
+  "createOne": "Create one",
+  "emailRequired": "Email is required",
+  "emailInvalid": "Enter a valid email address",
+  "passwordRequired": "Password is required",
+  "passwordTooShort": "Password must be at least 6 characters",
+
+  "createAccountTitle": "Create Account",
+  "startTrackingToday": "Start tracking your health today",
+  "phoneNumber": "Phone number",
+  "confirmPassword": "Confirm password",
+  "alreadyHaveAccount": "Already have an account?",
+  "signInLink": "Sign in",
+  "nameRequired": "Name is required",
+  "nameShort": "Enter your full name",
+  "phoneRequired": "Phone number is required",
+  "phoneInvalid": "Enter a valid phone number",
+  "confirmPasswordRequired": "Please confirm your password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "passwordStrengthLabel": "Password strength: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "Weak",
+  "passwordMedium": "Medium",
+  "passwordStrong": "Strong",
+
+  "resetPasswordTitle": "Reset Password",
+  "resetPasswordSubtitle": "Enter your email address and we'll send you a link to reset your password.",
+  "sendResetLink": "Send Reset Link",
+  "checkInbox": "Check your inbox",
+  "resetLinkSentTo": "We sent a password reset link to\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "Back to Sign In",
+
+  "noHistoryYet": "No history yet",
+  "noHistorySubtitle": "Calculate your BMI on the Home tab and your history will appear here.",
+  "today": "Today",
+  "yesterday": "Yesterday",
+  "yourProgress": "Your Progress",
+  "entriesCount": "{count} entries",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count} entry",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "Average",
+  "lowest": "Lowest",
+  "highest": "Highest",
+  "trend": "Trend",
+  "deleteRecordTitle": "Delete record?",
+  "deleteRecordContent": "This will permanently remove this BMI record.",
+  "failedToLoadHistory": "Failed to load history",
+  "retry": "Retry",
+
+  "avgBmi": "Avg BMI",
+  "latestBmi": "Latest BMI",
+  "bestBmi": "Best BMI",
+  "bmiTrend": "BMI Trend",
+  "lastNMeasurements": "Last {count} measurements",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "Category Distribution",
+  "basedOnAllRecords": "Based on all {count} records",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "Recent Measurements",
+  "last5Entries": "Last 5 entries",
+  "noDataYet": "No data yet",
+  "noDataSubtitle": "Start tracking your BMI and your insights will appear here."
+}

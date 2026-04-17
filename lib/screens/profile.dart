@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../constants.dart';
+import '../generated/l10n/app_localizations.dart';
+import '../main.dart';
 import '../models/bmi_record.dart';
 import '../services/auth_service.dart';
+import '../services/locale_service.dart';
 import '../services/session_service.dart';
 import '../database/app_database.dart';
 
@@ -85,7 +88,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Profile updated'),
+        content: Text(AppLocalizations.of(context).profileUpdated),
         backgroundColor: kSuccessColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -95,6 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _signOut() async {
+    final l10n = AppLocalizations.of(context);
     final isGuest = _isGuest;
     final confirmed = await showDialog<bool>(
       context: context,
@@ -103,26 +107,24 @@ class _ProfilePageState extends State<ProfilePage> {
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(kRadiusMD)),
         title: Text(
-          isGuest ? 'Leave guest mode?' : 'Sign out?',
+          isGuest ? l10n.leaveGuestTitle : l10n.signOutTitle,
           style: TextStyle(color: DynamicColors.textPrimary(context)),
         ),
         content: Text(
-          isGuest
-              ? 'Your local data will be cleared. Sign in or create an account to keep your history.'
-              : 'You can sign back in any time to access your synced data.',
+          isGuest ? l10n.leaveGuestContent : l10n.signOutContent,
           style: TextStyle(color: DynamicColors.textSecondary(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel',
+            child: Text(l10n.cancel,
                 style:
                     TextStyle(color: DynamicColors.textSecondary(context))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: Text(
-              isGuest ? 'Leave' : 'Sign Out',
+              isGuest ? l10n.leave : l10n.signOut,
               style: const TextStyle(
                   color: kErrorColor, fontWeight: FontWeight.w700),
             ),
@@ -143,29 +145,30 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _deleteAccount() async {
+    final l10n = AppLocalizations.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: DynamicColors.card(context),
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(kRadiusMD)),
-        title: const Text('Delete account?',
-            style: TextStyle(color: kErrorColor)),
+        title: Text(l10n.deleteAccountTitle,
+            style: const TextStyle(color: kErrorColor)),
         content: Text(
-          'This permanently deletes your account and all data. This cannot be undone.',
+          l10n.deleteAccountContent,
           style: TextStyle(color: DynamicColors.textSecondary(context)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Cancel',
+            child: Text(l10n.cancel,
                 style:
                     TextStyle(color: DynamicColors.textSecondary(context))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete',
-                style: TextStyle(
+            child: Text(l10n.delete,
+                style: const TextStyle(
                     color: kErrorColor, fontWeight: FontWeight.w700)),
           ),
         ],
@@ -187,8 +190,75 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _showLanguagePicker() {
+    final l10n = AppLocalizations.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: DynamicColors.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: kSpaceMD),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: DynamicColors.border(context),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: kSpaceMD),
+              Text(
+                l10n.selectLanguage,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: DynamicColors.textPrimary(context),
+                ),
+              ),
+              const SizedBox(height: kSpaceSM),
+              Flexible(
+                child: ListView(
+                  shrinkWrap: true,
+                  children: LocaleService.supportedLanguages.entries.map((entry) {
+                    return ListTile(
+                      title: Text(
+                        entry.value,
+                        style: TextStyle(
+                          color: DynamicColors.textPrimary(context),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        entry.key.toUpperCase(),
+                        style: TextStyle(
+                          color: DynamicColors.textSecondary(context),
+                          fontSize: 11,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(ctx);
+                        BMICalculatorApp.setLocale(context, Locale(entry.key));
+                      },
+                    );
+                  }).toList(),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: DynamicColors.bg(context),
       appBar: AppBar(
@@ -196,7 +266,7 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          'Profile',
+          l10n.profile,
           style: TextStyle(
             color: DynamicColors.textPrimary(context),
             fontWeight: FontWeight.w700,
@@ -213,14 +283,14 @@ class _ProfilePageState extends State<ProfilePage> {
           if (_isEditing) ...[
             TextButton(
               onPressed: () => setState(() => _isEditing = false),
-              child: Text('Cancel',
+              child: Text(l10n.cancel,
                   style:
                       TextStyle(color: DynamicColors.textSecondary(context))),
             ),
             TextButton(
               onPressed: _isSaving ? null : _saveProfile,
-              child: const Text('Save',
-                  style: TextStyle(
+              child: Text(l10n.save,
+                  style: const TextStyle(
                       color: kAccent, fontWeight: FontWeight.w700)),
             ),
           ],
@@ -250,7 +320,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           const SizedBox(width: kSpaceSM),
                           Expanded(
                             child: Text(
-                              'Guest mode — data is stored locally only. Create an account to sync across devices.',
+                              l10n.guestModeBanner,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: DynamicColors.textPrimary(context),
@@ -295,7 +365,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         const SizedBox(height: kSpaceSM),
                         Text(
                           _isGuest
-                              ? 'Guest User'
+                              ? l10n.guestUser
                               : (_userData?['name'] ?? 'User'),
                           style: TextStyle(
                             fontSize: 20,
@@ -305,7 +375,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         Text(
                           _isGuest
-                              ? 'Guest mode · data stored locally'
+                              ? l10n.guestModeLocal
                               : (_userData?['email'] ?? ''),
                           style: TextStyle(
                             fontSize: 13,
@@ -322,14 +392,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     Row(
                       children: [
                         _StatCard(
-                          label: 'Total Checks',
+                          label: l10n.totalChecks,
                           value: '$_totalChecks',
                           icon: Icons.history,
                           color: kAccent,
                         ),
                         const SizedBox(width: kSpaceSM),
                         _StatCard(
-                          label: 'Average BMI',
+                          label: l10n.averageBmi,
                           value: _avgBMI?.toStringAsFixed(1) ?? '--',
                           icon: Icons.monitor_weight_outlined,
                           color:
@@ -342,7 +412,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
                   // ── Personal Info (authenticated only) ──────────────────────
                   if (!_isGuest) ...[
-                    _SectionHeader(context: context, title: 'Personal Information'),
+                    _SectionHeader(context: context, title: l10n.personalInformation),
                     const SizedBox(height: kSpaceSM),
                     _InfoCard(
                       child: Column(
@@ -350,34 +420,34 @@ class _ProfilePageState extends State<ProfilePage> {
                           _isEditing
                               ? _EditableField(
                                   controller: _nameController,
-                                  label: 'Full name',
+                                  label: l10n.fullName,
                                   icon: Icons.person_outline,
                                 )
                               : _InfoRow(
                                   icon: Icons.person_outline,
-                                  label: 'Full name',
-                                  value: _userData?['name'] ?? 'N/A',
+                                  label: l10n.fullName,
+                                  value: _userData?['name'] ?? l10n.notAvailable,
                                 ),
                           Divider(
                               color: DynamicColors.border(context), height: 1),
                           _InfoRow(
                             icon: Icons.email_outlined,
-                            label: 'Email',
-                            value: _userData?['email'] ?? 'N/A',
+                            label: l10n.email,
+                            value: _userData?['email'] ?? l10n.notAvailable,
                           ),
                           Divider(
                               color: DynamicColors.border(context), height: 1),
                           _isEditing
                               ? _EditableField(
                                   controller: _phoneController,
-                                  label: 'Phone',
+                                  label: l10n.phone,
                                   icon: Icons.phone_outlined,
                                   keyboardType: TextInputType.phone,
                                 )
                               : _InfoRow(
                                   icon: Icons.phone_outlined,
-                                  label: 'Phone',
-                                  value: _userData?['phone'] ?? 'N/A',
+                                  label: l10n.phone,
+                                  value: _userData?['phone'] ?? l10n.notAvailable,
                                 ),
                         ],
                       ),
@@ -386,7 +456,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
 
                   // ── Account Actions ─────────────────────────────────────────
-                  _SectionHeader(context: context, title: 'Account'),
+                  _SectionHeader(context: context, title: l10n.account),
                   const SizedBox(height: kSpaceSM),
 
                   _InfoCard(
@@ -395,7 +465,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (_isGuest) ...[
                           _ActionRow(
                             icon: Icons.person_add_outlined,
-                            label: 'Create Account',
+                            label: l10n.createAccount,
                             onTap: () =>
                                 Navigator.pushReplacementNamed(context, '/register'),
                           ),
@@ -403,14 +473,14 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: DynamicColors.border(context), height: 1),
                           _ActionRow(
                             icon: Icons.login,
-                            label: 'Sign In',
+                            label: l10n.signIn,
                             onTap: () =>
                                 Navigator.pushReplacementNamed(context, '/login'),
                           ),
                         ] else ...[
                           _ActionRow(
                             icon: Icons.lock_outline,
-                            label: 'Change Password',
+                            label: l10n.changePassword,
                             onTap: () => Navigator.pushNamed(
                               context,
                               '/reset-password',
@@ -421,7 +491,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               color: DynamicColors.border(context), height: 1),
                           _ActionRow(
                             icon: Icons.delete_outline,
-                            label: 'Delete Account',
+                            label: l10n.deleteAccount,
                             color: kErrorColor,
                             onTap: _deleteAccount,
                           ),
@@ -430,11 +500,23 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                         _ActionRow(
                           icon: Icons.logout,
-                          label: _isGuest ? 'Leave Guest Mode' : 'Sign Out',
+                          label: _isGuest ? l10n.leaveGuestMode : l10n.signOut,
                           color: kErrorColor,
                           onTap: _signOut,
                         ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(height: kSpaceLG),
+
+                  // ── Language ─────────────────────────────────────────────────
+                  _SectionHeader(context: context, title: l10n.language),
+                  const SizedBox(height: kSpaceSM),
+                  _InfoCard(
+                    child: _ActionRow(
+                      icon: Icons.language_outlined,
+                      label: l10n.selectLanguage,
+                      onTap: _showLanguagePicker,
                     ),
                   ),
                   const SizedBox(height: kSpaceXXL),

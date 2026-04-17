@@ -142,3 +142,41 @@ Config auto-generated in `lib/firebase_options.dart` — do not edit manually.
 `AndroidManifest.xml` declares only:
 - `INTERNET`
 - `ACCESS_NETWORK_STATE`
+
+## Android build configuration (AGP 9.0.0)
+
+This project targets **Android Gradle Plugin 9.0.0** with **Gradle 9.3.0** and **Flutter 3.41.x**. Several non-obvious changes were required to make this combination work. Do not revert them.
+
+### Version matrix
+
+| Component | Version | File |
+|---|---|---|
+| Android Gradle Plugin (AGP) | `9.0.0` | `android/settings.gradle` |
+| Gradle wrapper | `9.3.0` | `android/gradle/wrapper/gradle-wrapper.properties` |
+| google-services plugin | `4.4.2` | `android/settings.gradle` |
+
+### Why `google-services` must be ≥ 4.4.x
+
+`google-services` ≤ 4.3.x uses the `applicationVariants` API that was removed in AGP 9. Upgrading to `4.4.2` rewrites that internal path and eliminates the error:
+```
+Could not get unknown property 'applicationVariants' for object of type ApplicationExtensionImpl
+```
+
+### Why `kotlin-android` is NOT declared in `app/build.gradle`
+
+`dev.flutter.flutter-gradle-plugin` (Flutter 3.19+) applies `kotlin-android` internally. Declaring it a second time in `plugins {}` causes:
+```
+Cannot add extension with name 'kotlin', as there is an extension already registered with that name.
+```
+Do not add `id "kotlin-android"` back to `android/app/build.gradle`.
+
+### Why `kotlinOptions` is NOT in `app/build.gradle`
+
+`kotlinOptions { jvmTarget = "..." }` inside the `android {}` block requires the Kotlin plugin to already be applied. Because `dev.flutter.flutter-gradle-plugin` is declared last (required by Flutter), Kotlin isn't wired up yet when the `android {}` block is evaluated. Removing `kotlinOptions` is safe — Flutter's plugin sets the Kotlin JVM target internally, and `compileOptions` covers the Java side.
+
+### Why `android.newDsl=false` is in `gradle.properties`
+
+AGP 9 enables a new Gradle DSL interface by default. The Flutter Gradle plugin's Groovy-based build scripts still use the old DSL interface, causing a `NullPointerException` at configuration time. Setting `android.newDsl=false` in `android/gradle.properties` tells AGP 9 to keep the old interface available. This is the opt-out path documented by Flutter at:
+https://docs.flutter.dev/release/breaking-changes/migrate-to-agp-9
+
+Remove this flag only after Flutter officially migrates its Gradle plugin to the AGP 9 new DSL.

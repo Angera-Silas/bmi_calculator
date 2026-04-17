@@ -1,0 +1,207 @@
+{
+  "@@locale": "de",
+
+  "appTitle": "BMI-Rechner",
+  "appTagline": "Verfolgen · Verstehen · Verbessern",
+  "trackHealthJourney": "Verfolge deine Gesundheitsreise",
+
+  "tabCalculate": "Berechnen",
+  "tabHistory": "Verlauf",
+  "tabInsights": "Statistiken",
+  "subtitleCalculate": "Gib deine Maße unten ein",
+  "subtitleHistory": "Deine früheren BMI-Berechnungen",
+  "subtitleInsights": "Trends und Analysen",
+
+  "liveBmiPreview": "Live-BMI-Vorschau",
+  "metricUnits": "Metrisch (cm/kg)",
+  "imperialUnits": "Imperial (ft/lbs)",
+  "biologicalSex": "Biologisches Geschlecht",
+  "male": "Männlich",
+  "female": "Weiblich",
+  "height": "Größe",
+  "weight": "Gewicht",
+  "age": "Alter",
+  "years": "J.",
+  "healthConditions": "Gesundheitszustand (optional)",
+  "pregnancyStatus": "Schwangerschaftsstatus (optional)",
+  "prePregnancyWeight": "Gewicht vor Schwangerschaft (optional)",
+  "weightInKg": "Gewicht in kg",
+  "weightInLbs": "Gewicht in lbs",
+  "calculateBmi": "BMI berechnen",
+  "selectGenderError": "Bitte wähle dein Geschlecht aus, um fortzufahren",
+  "signInToSave": "Bitte melde dich an, um die Berechnung zu speichern",
+  "shortUnderweight": "· Untergewicht",
+  "shortNormal": "· Normal",
+  "shortOverweight": "· Übergewicht",
+  "shortObese": "· Adipositas",
+
+  "yourResults": "Deine Ergebnisse",
+  "bodyMassIndex": "Body-Mass-Index",
+  "whatThisMeans": "Was das bedeutet",
+  "idealWeightRange": "Idealer Gewichtsbereich",
+  "minLabel": "Min",
+  "maxLabel": "Max",
+  "dailyCalories": "Tägliche Kalorien",
+  "kcalPerDay": "kcal/Tag",
+  "waterIntake": "Wasseraufnahme",
+  "litresPerDay": "Liter/Tag",
+  "healthConsideration": "Gesundheitshinweis",
+  "nutritionRecommendations": "Ernährungsempfehlungen",
+  "dailyMealPlan": "Täglicher Ernährungsplan",
+  "macronutrientBalance": "Makronährstoffbilanz",
+  "focusFoods": "Wichtige Lebensmittel",
+  "keyRecommendations": "Wichtigste Empfehlungen",
+  "bmiScale": "BMI-Skala",
+  "reCalculate": "Neu berechnen",
+  "resultCopied": "Ergebnis in die Zwischenablage kopiert!",
+  "copyToClipboard": "In die Zwischenablage kopieren",
+  "moreRecommendations": "... und {count} weitere Empfehlungen",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "Mein BMI ist {bmi} — {category}\n{interpretation}\nMit BMI Calculator App verfolgt",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "Starkes Untergewicht",
+  "bmiUnderweight": "Untergewicht",
+  "bmiNormalWeight": "Normalgewicht",
+  "bmiOverweight": "Übergewicht",
+  "bmiObeseI": "Adipositas Grad I",
+  "bmiObeseII": "Adipositas Grad II",
+  "bmiSeverelyObese": "Starke Adipositas",
+
+  "profile": "Profil",
+  "edit": "Bearbeiten",
+  "cancel": "Abbrechen",
+  "save": "Speichern",
+  "guestUser": "Gastnutzer",
+  "guestModeLocal": "Gastmodus · Daten lokal gespeichert",
+  "guestModeBanner": "Gastmodus — Daten werden nur lokal gespeichert. Erstelle ein Konto für geräteübergreifende Synchronisierung.",
+  "personalInformation": "Persönliche Informationen",
+  "fullName": "Vollständiger Name",
+  "email": "E-Mail",
+  "phone": "Telefon",
+  "notAvailable": "N/V",
+  "account": "Konto",
+  "totalChecks": "Gesamte Messungen",
+  "averageBmi": "Durchschnittlicher BMI",
+  "createAccount": "Konto erstellen",
+  "signIn": "Anmelden",
+  "changePassword": "Passwort ändern",
+  "deleteAccount": "Konto löschen",
+  "leaveGuestMode": "Gastmodus verlassen",
+  "signOut": "Abmelden",
+  "profileUpdated": "Profil aktualisiert",
+  "leaveGuestTitle": "Gastmodus verlassen?",
+  "signOutTitle": "Abmelden?",
+  "leaveGuestContent": "Deine lokalen Daten werden gelöscht. Melde dich an oder erstelle ein Konto, um den Verlauf zu behalten.",
+  "signOutContent": "Du kannst dich jederzeit wieder anmelden.",
+  "leave": "Verlassen",
+  "deleteAccountTitle": "Konto löschen?",
+  "deleteAccountContent": "Dein Konto und alle Daten werden dauerhaft gelöscht. Dies kann nicht rückgängig gemacht werden.",
+  "delete": "Löschen",
+  "language": "Sprache",
+  "selectLanguage": "Sprache auswählen",
+
+  "welcomeBack": "Willkommen zurück",
+  "signInToContinue": "Melde dich an, um fortzufahren",
+  "emailAddress": "E-Mail-Adresse",
+  "password": "Passwort",
+  "forgotPassword": "Passwort vergessen?",
+  "continueAsGuest": "Als Gast fortfahren",
+  "dontHaveAccount": "Noch kein Konto?",
+  "createOne": "Erstellen",
+  "emailRequired": "E-Mail ist erforderlich",
+  "emailInvalid": "Gib eine gültige E-Mail-Adresse ein",
+  "passwordRequired": "Passwort ist erforderlich",
+  "passwordTooShort": "Das Passwort muss mindestens 6 Zeichen haben",
+
+  "createAccountTitle": "Konto erstellen",
+  "startTrackingToday": "Beginne noch heute mit der Gesundheitsverfolgung",
+  "phoneNumber": "Telefonnummer",
+  "confirmPassword": "Passwort bestätigen",
+  "alreadyHaveAccount": "Bereits ein Konto?",
+  "signInLink": "Anmelden",
+  "nameRequired": "Name ist erforderlich",
+  "nameShort": "Gib deinen vollständigen Namen ein",
+  "phoneRequired": "Telefonnummer ist erforderlich",
+  "phoneInvalid": "Gib eine gültige Telefonnummer ein",
+  "confirmPasswordRequired": "Bitte bestätige dein Passwort",
+  "passwordsDoNotMatch": "Passwörter stimmen nicht überein",
+  "passwordStrengthLabel": "Passwortstärke: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "Schwach",
+  "passwordMedium": "Mittel",
+  "passwordStrong": "Stark",
+
+  "resetPasswordTitle": "Passwort zurücksetzen",
+  "resetPasswordSubtitle": "Gib deine E-Mail-Adresse ein und wir senden dir einen Link zum Zurücksetzen des Passworts.",
+  "sendResetLink": "Link senden",
+  "checkInbox": "Überprüfe deinen Posteingang",
+  "resetLinkSentTo": "Wir haben den Passwort-Reset-Link an\n{email} gesendet",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "Zurück zur Anmeldung",
+
+  "noHistoryYet": "Noch kein Verlauf",
+  "noHistorySubtitle": "Berechne deinen BMI im Tab Berechnen und dein Verlauf erscheint hier.",
+  "today": "Heute",
+  "yesterday": "Gestern",
+  "yourProgress": "Dein Fortschritt",
+  "entriesCount": "{count} Einträge",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count} Eintrag",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "Durchschnitt",
+  "lowest": "Minimum",
+  "highest": "Maximum",
+  "trend": "Trend",
+  "deleteRecordTitle": "Eintrag löschen?",
+  "deleteRecordContent": "Dieser BMI-Eintrag wird dauerhaft gelöscht.",
+  "failedToLoadHistory": "Verlauf konnte nicht geladen werden",
+  "retry": "Erneut versuchen",
+
+  "avgBmi": "Ø BMI",
+  "latestBmi": "Letzter BMI",
+  "bestBmi": "Bester BMI",
+  "bmiTrend": "BMI-Trend",
+  "lastNMeasurements": "Letzte {count} Messungen",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "Kategorieverteilung",
+  "basedOnAllRecords": "Basierend auf {count} Einträgen",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "Neueste Messungen",
+  "last5Entries": "Letzte 5 Einträge",
+  "noDataYet": "Noch keine Daten",
+  "noDataSubtitle": "Beginne mit der BMI-Erfassung und deine Statistiken erscheinen hier."
+}

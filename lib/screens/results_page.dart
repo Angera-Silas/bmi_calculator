@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../constants.dart';
 import '../calculator_brain.dart';
+import '../generated/l10n/app_localizations.dart';
 import '../models/diet_recommendation.dart';
 import '../widgets/bmi_gauge.dart';
 
@@ -20,12 +21,12 @@ class ResultsPage extends StatelessWidget {
   final CalculatorBrain calculator;
 
   void _share(BuildContext context) {
-    final text =
-        'My BMI is $bmiResult — $resultText\n$interpretation\nTracked with BMI Calculator App';
+    final l10n = AppLocalizations.of(context);
+    final text = l10n.shareText(bmiResult, resultText, interpretation);
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Result copied to clipboard!'),
+        content: Text(l10n.resultCopied),
         backgroundColor: kSuccessColor,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
@@ -35,6 +36,7 @@ class ResultsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isDark = DynamicColors.isDark(context);
     final bmiVal = double.tryParse(bmiResult) ?? 0.0;
     final categoryColor = getBMIColor(bmiVal);
@@ -56,7 +58,7 @@ class ResultsPage extends StatelessWidget {
               pinned: true,
               automaticallyImplyLeading: false,
               title: Text(
-                'Your Results',
+                l10n.yourResults,
                 style: TextStyle(
                   color: DynamicColors.textPrimary(context),
                   fontWeight: FontWeight.w700,
@@ -67,7 +69,7 @@ class ResultsPage extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.ios_share_outlined, color: DynamicColors.textSecondary(context)),
                   onPressed: () => _share(context),
-                  tooltip: 'Copy to clipboard',
+                  tooltip: l10n.copyToClipboard,
                 ),
                 const SizedBox(width: 4),
               ],
@@ -121,7 +123,7 @@ class ResultsPage extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Body Mass Index',
+                          l10n.bodyMassIndex,
                           style: TextStyle(
                             color: DynamicColors.textSecondary(context),
                             fontSize: 13,
@@ -153,7 +155,7 @@ class ResultsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'What this means',
+                                l10n.whatThisMeans,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   fontSize: 14,
@@ -187,19 +189,19 @@ class ResultsPage extends StatelessWidget {
                           context: context,
                           icon: Icons.scale_outlined,
                           iconColor: kInfoColor,
-                          title: 'Ideal Weight Range',
+                          title: l10n.idealWeightRange,
                         ),
                         const SizedBox(height: kSpaceMD),
                         Row(
                           children: [
                             _StatChip(
-                              label: 'Min',
+                              label: l10n.minLabel,
                               value: '${idealRange['min']!.toStringAsFixed(1)} kg',
                               color: kUnderweightColor,
                             ),
                             const SizedBox(width: kSpaceSM),
                             _StatChip(
-                              label: 'Max',
+                              label: l10n.maxLabel,
                               value: '${idealRange['max']!.toStringAsFixed(1)} kg',
                               color: kOverweightColor,
                             ),
@@ -247,7 +249,7 @@ class ResultsPage extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Daily Calories',
+                                    l10n.dailyCalories,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -266,7 +268,7 @@ class ResultsPage extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'kcal/day',
+                                l10n.kcalPerDay,
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: DynamicColors.textSecondary(context),
@@ -295,7 +297,7 @@ class ResultsPage extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
-                                    'Water Intake',
+                                    l10n.waterIntake,
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
@@ -314,7 +316,7 @@ class ResultsPage extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'litres/day',
+                                l10n.litresPerDay,
                                 style: TextStyle(
                                   fontSize: 11,
                                   color: DynamicColors.textSecondary(context),
@@ -351,7 +353,7 @@ class ResultsPage extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Health Consideration',
+                                      l10n.healthConsideration,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14,
@@ -388,7 +390,7 @@ class ResultsPage extends StatelessWidget {
                           context: context,
                           icon: Icons.restaurant_outlined,
                           iconColor: kWarningColor,
-                          title: 'Nutrition Recommendations',
+                          title: l10n.nutritionRecommendations,
                         ),
                         const SizedBox(height: kSpaceMD),
                         Text(
@@ -421,7 +423,7 @@ class ResultsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Daily Meal Plan',
+                                l10n.dailyMealPlan,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
@@ -456,7 +458,7 @@ class ResultsPage extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Macronutrient Balance',
+                                l10n.macronutrientBalance,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 12,
@@ -477,7 +479,7 @@ class ResultsPage extends StatelessWidget {
                         const SizedBox(height: kSpaceMD),
                         // Food groups
                         Text(
-                          'Focus Foods',
+                          l10n.focusFoods,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 12,
@@ -511,7 +513,7 @@ class ResultsPage extends StatelessWidget {
                         const SizedBox(height: kSpaceMD),
                         // Key recommendations
                         Text(
-                          'Key Recommendations',
+                          l10n.keyRecommendations,
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 12,
@@ -550,7 +552,7 @@ class ResultsPage extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: kSpaceXS),
                             child: Text(
-                              '... and ${dietRec.recommendations.length - 5} more recommendations',
+                              l10n.moreRecommendations(dietRec.recommendations.length - 5),
                               style: TextStyle(
                                 color: DynamicColors.textSecondary(context),
                                 fontSize: 11,
@@ -573,7 +575,7 @@ class ResultsPage extends StatelessWidget {
                           context: context,
                           icon: Icons.bar_chart_outlined,
                           iconColor: kAccent,
-                          title: 'BMI Scale',
+                          title: l10n.bmiScale,
                         ),
                         const SizedBox(height: kSpaceMD),
                         ..._bmiScaleRows(context),
@@ -596,7 +598,7 @@ class ResultsPage extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text('Re-Calculate', style: kLargeButtonTextStyle),
+                      child: Text(l10n.reCalculate, style: kLargeButtonTextStyle),
                     ),
                   ),
                   const SizedBox(height: kSpaceLG),
@@ -610,14 +612,15 @@ class ResultsPage extends StatelessWidget {
   }
 
   List<Widget> _bmiScaleRows(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final rows = [
-      ('< 16.0', 'Severely Underweight', kSeverelyUnderweightColor),
-      ('16 – 18.4', 'Underweight', kUnderweightColor),
-      ('18.5 – 24.9', 'Normal Weight', kNormalColor),
-      ('25 – 29.9', 'Overweight', kOverweightColor),
-      ('30 – 34.9', 'Obese Class I', kObeseIColor),
-      ('35 – 39.9', 'Obese Class II', kObeseIIColor),
-      ('≥ 40', 'Severely Obese', kObeseIIIColor),
+      ('< 16.0', l10n.bmiSeverelyUnderweight, kSeverelyUnderweightColor),
+      ('16 – 18.4', l10n.bmiUnderweight, kUnderweightColor),
+      ('18.5 – 24.9', l10n.bmiNormalWeight, kNormalColor),
+      ('25 – 29.9', l10n.bmiOverweight, kOverweightColor),
+      ('30 – 34.9', l10n.bmiObeseI, kObeseIColor),
+      ('35 – 39.9', l10n.bmiObeseII, kObeseIIColor),
+      ('≥ 40', l10n.bmiSeverelyObese, kObeseIIIColor),
     ];
     return rows.map((row) {
       final isActive = row.$2 == resultText;

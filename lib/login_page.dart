@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'constants.dart';
+import 'generated/l10n/app_localizations.dart';
 import 'services/auth_service.dart';
 import 'services/sync_service.dart';
 import 'services/connectivity_service.dart';
@@ -53,6 +54,44 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _socialLogin(String provider) async {
+    setState(() => _isLoading = true);
+    String? error;
+
+    switch (provider) {
+      case 'google':
+        error = await AuthService.loginWithGoogle();
+        break;
+      case 'apple':
+        error = await AuthService.loginWithApple();
+        break;
+      case 'facebook':
+        error = await AuthService.loginWithFacebook();
+        break;
+    }
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (error == null) {
+      // Sync if online
+      final isOnline = await ConnectivityService.isOnline;
+      if (isOnline && SessionService.userId != null) {
+        await SyncService.sync(SessionService.userId!);
+      }
+      Navigator.pushReplacementNamed(context, '/input');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: kErrorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+        ),
+      );
+    }
+  }
+
   Future<void> _loginAsGuest() async {
     setState(() => _isLoading = true);
     await AuthService.loginAsGuest();
@@ -98,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: kSpaceLG),
                 Center(
                   child: Text(
-                    'BMI Calculator',
+                    AppLocalizations.of(context).appTitle,
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,
@@ -109,7 +148,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: kSpaceXS),
                 Center(
                   child: Text(
-                    'Track your health journey',
+                    AppLocalizations.of(context).trackHealthJourney,
                     style: TextStyle(
                       fontSize: 14,
                       color: DynamicColors.textSecondary(context),
@@ -118,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: kSpaceXXL),
                 Text(
-                  'Welcome back',
+                  AppLocalizations.of(context).welcomeBack,
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
@@ -127,13 +166,13 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: kSpaceXS),
                 Text(
-                  'Sign in to continue',
+                  AppLocalizations.of(context).signInToContinue,
                   style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
                 ),
                 const SizedBox(height: kSpaceLG),
 
                 // Email
-                _buildLabel(context, 'Email address'),
+                _buildLabel(context, AppLocalizations.of(context).emailAddress),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _emailController,
@@ -145,9 +184,10 @@ class _LoginPageState extends State<LoginPage> {
                     icon: Icons.email_outlined,
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Email is required';
+                    final l10n = AppLocalizations.of(context);
+                    if (v == null || v.trim().isEmpty) return l10n.emailRequired;
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
-                      return 'Enter a valid email address';
+                      return l10n.emailInvalid;
                     }
                     return null;
                   },
@@ -155,7 +195,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: kSpaceMD),
 
                 // Password
-                _buildLabel(context, 'Password'),
+                _buildLabel(context, AppLocalizations.of(context).password),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _passwordController,
@@ -175,8 +215,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Password is required';
-                    if (v.length < 6) return 'Password must be at least 6 characters';
+                    final l10n = AppLocalizations.of(context);
+                    if (v == null || v.trim().isEmpty) return l10n.passwordRequired;
+                    if (v.length < 6) return l10n.passwordTooShort;
                     return null;
                   },
                 ),
@@ -191,7 +232,7 @@ class _LoginPageState extends State<LoginPage> {
                       arguments: {'email': _emailController.text.trim()},
                     ),
                     child: Text(
-                      'Forgot password?',
+                      AppLocalizations.of(context).forgotPassword,
                       style: TextStyle(color: kAccent, fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                   ),
@@ -222,10 +263,67 @@ class _LoginPageState extends State<LoginPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text('Sign In', style: kLargeButtonTextStyle),
+                        : Text(AppLocalizations.of(context).signIn, style: kLargeButtonTextStyle),
                   ),
                 ),
                 const SizedBox(height: kSpaceLG),
+
+                // Social Login Section
+                Column(
+                  children: [
+                    // Divider with text
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: DynamicColors.border(context),
+                            thickness: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: kSpaceMD),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              color: DynamicColors.textSecondary(context),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: DynamicColors.border(context),
+                            thickness: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: kSpaceMD),
+
+                    // Social buttons
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _buildSocialButton(
+                          icon: Icons.g_mobiledata,
+                          label: 'Google',
+                          onPressed: () => _socialLogin('google'),
+                        ),
+                        _buildSocialButton(
+                          icon: Icons.apple,
+                          label: 'Apple',
+                          onPressed: () => _socialLogin('apple'),
+                        ),
+                        _buildSocialButton(
+                          icon: Icons.facebook,
+                          label: 'Facebook',
+                          onPressed: () => _socialLogin('facebook'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: kSpaceLG),
+                  ],
+                ),
 
                 // Continue as Guest
                 Padding(
@@ -234,7 +332,7 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: _isLoading ? null : _loginAsGuest,
                     icon: const Icon(Icons.person_outline, size: 18),
                     label: Text(
-                      'Continue as Guest',
+                      AppLocalizations.of(context).continueAsGuest,
                       style: TextStyle(
                         color: kAccent,
                         fontWeight: FontWeight.w600,
@@ -249,13 +347,13 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Don't have an account? ",
+                      '${AppLocalizations.of(context).dontHaveAccount} ',
                       style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pushReplacementNamed(context, '/register'),
-                      child: const Text(
-                        'Create one',
+                      child: Text(
+                        AppLocalizations.of(context).createOne,
                         style: TextStyle(
                           color: kAccent,
                           fontWeight: FontWeight.w700,
@@ -318,6 +416,54 @@ class _LoginPageState extends State<LoginPage> {
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(kRadiusMD),
         borderSide: const BorderSide(color: kErrorColor, width: 2),
+      ),
+    );
+  }
+
+  Widget _buildSocialButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 80,
+      height: 80,
+      child: Column(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _isLoading ? null : onPressed,
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
+                  borderRadius: BorderRadius.circular(kRadiusMD),
+                  border: Border.all(
+                    color: DynamicColors.border(context),
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 28,
+                  color: DynamicColors.textPrimary(context),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: kSpaceXS),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: DynamicColors.textSecondary(context),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }

@@ -1,0 +1,207 @@
+{
+  "@@locale": "ar",
+
+  "appTitle": "حاسبة مؤشر كتلة الجسم",
+  "appTagline": "تتبع · افهم · تحسّن",
+  "trackHealthJourney": "تتبع رحلتك الصحية",
+
+  "tabCalculate": "احسب",
+  "tabHistory": "السجل",
+  "tabInsights": "الإحصاءات",
+  "subtitleCalculate": "أدخل قياساتك أدناه",
+  "subtitleHistory": "حسابات مؤشر كتلة الجسم السابقة",
+  "subtitleInsights": "الاتجاهات والتحليلات",
+
+  "liveBmiPreview": "معاينة مؤشر كتلة الجسم",
+  "metricUnits": "متري (سم/كغ)",
+  "imperialUnits": "إمبراطوري (قدم/رطل)",
+  "biologicalSex": "الجنس البيولوجي",
+  "male": "ذكر",
+  "female": "أنثى",
+  "height": "الطول",
+  "weight": "الوزن",
+  "age": "العمر",
+  "years": "سنة",
+  "healthConditions": "الحالات الصحية (اختياري)",
+  "pregnancyStatus": "حالة الحمل (اختياري)",
+  "prePregnancyWeight": "الوزن قبل الحمل (اختياري)",
+  "weightInKg": "الوزن بالكيلوغرام",
+  "weightInLbs": "الوزن بالرطل",
+  "calculateBmi": "احسب مؤشر كتلة الجسم",
+  "selectGenderError": "الرجاء اختيار جنسك للمتابعة",
+  "signInToSave": "الرجاء تسجيل الدخول لحفظ الحساب",
+  "shortUnderweight": "· نقص الوزن",
+  "shortNormal": "· طبيعي",
+  "shortOverweight": "· زيادة الوزن",
+  "shortObese": "· سمنة",
+
+  "yourResults": "نتائجك",
+  "bodyMassIndex": "مؤشر كتلة الجسم",
+  "whatThisMeans": "ماذا يعني هذا",
+  "idealWeightRange": "نطاق الوزن المثالي",
+  "minLabel": "أدنى",
+  "maxLabel": "أعلى",
+  "dailyCalories": "السعرات اليومية",
+  "kcalPerDay": "سعرة/يوم",
+  "waterIntake": "كمية الماء",
+  "litresPerDay": "لتر/يوم",
+  "healthConsideration": "اعتبار صحي",
+  "nutritionRecommendations": "التوصيات الغذائية",
+  "dailyMealPlan": "خطة الوجبات اليومية",
+  "macronutrientBalance": "توازن المغذيات الكبرى",
+  "focusFoods": "الأطعمة الأساسية",
+  "keyRecommendations": "التوصيات الرئيسية",
+  "bmiScale": "مقياس مؤشر كتلة الجسم",
+  "reCalculate": "إعادة الحساب",
+  "resultCopied": "تم نسخ النتيجة إلى الحافظة!",
+  "copyToClipboard": "نسخ إلى الحافظة",
+  "moreRecommendations": "... و{count} توصيات إضافية",
+  "@moreRecommendations": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "shareText": "مؤشر كتلة جسمي {bmi} — {category}\n{interpretation}\nتم التتبع بتطبيق BMI Calculator",
+  "@shareText": {
+    "placeholders": {
+      "bmi": { "type": "String" },
+      "category": { "type": "String" },
+      "interpretation": { "type": "String" }
+    }
+  },
+  "bmiSeverelyUnderweight": "نقص وزن حاد",
+  "bmiUnderweight": "نقص الوزن",
+  "bmiNormalWeight": "وزن طبيعي",
+  "bmiOverweight": "زيادة الوزن",
+  "bmiObeseI": "سمنة الدرجة الأولى",
+  "bmiObeseII": "سمنة الدرجة الثانية",
+  "bmiSeverelyObese": "سمنة مفرطة",
+
+  "profile": "الملف الشخصي",
+  "edit": "تعديل",
+  "cancel": "إلغاء",
+  "save": "حفظ",
+  "guestUser": "مستخدم ضيف",
+  "guestModeLocal": "وضع الضيف · البيانات محلية فقط",
+  "guestModeBanner": "وضع الضيف — البيانات محلية فقط. أنشئ حسابًا للمزامنة عبر الأجهزة.",
+  "personalInformation": "المعلومات الشخصية",
+  "fullName": "الاسم الكامل",
+  "email": "البريد الإلكتروني",
+  "phone": "الهاتف",
+  "notAvailable": "غير متاح",
+  "account": "الحساب",
+  "totalChecks": "إجمالي الفحوصات",
+  "averageBmi": "متوسط مؤشر كتلة الجسم",
+  "createAccount": "إنشاء حساب",
+  "signIn": "تسجيل الدخول",
+  "changePassword": "تغيير كلمة المرور",
+  "deleteAccount": "حذف الحساب",
+  "leaveGuestMode": "الخروج من وضع الضيف",
+  "signOut": "تسجيل الخروج",
+  "profileUpdated": "تم تحديث الملف الشخصي",
+  "leaveGuestTitle": "الخروج من وضع الضيف؟",
+  "signOutTitle": "تسجيل الخروج؟",
+  "leaveGuestContent": "سيتم مسح بياناتك المحلية. سجّل دخولك أو أنشئ حسابًا للاحتفاظ بسجلك.",
+  "signOutContent": "يمكنك تسجيل الدخول في أي وقت للوصول إلى بياناتك المتزامنة.",
+  "leave": "خروج",
+  "deleteAccountTitle": "حذف الحساب؟",
+  "deleteAccountContent": "سيؤدي هذا إلى حذف حسابك وجميع بياناتك نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
+  "delete": "حذف",
+  "language": "اللغة",
+  "selectLanguage": "اختر اللغة",
+
+  "welcomeBack": "مرحبًا بعودتك",
+  "signInToContinue": "سجّل دخولك للمتابعة",
+  "emailAddress": "البريد الإلكتروني",
+  "password": "كلمة المرور",
+  "forgotPassword": "نسيت كلمة المرور؟",
+  "continueAsGuest": "المتابعة كضيف",
+  "dontHaveAccount": "ليس لديك حساب؟",
+  "createOne": "أنشئ حسابًا",
+  "emailRequired": "البريد الإلكتروني مطلوب",
+  "emailInvalid": "أدخل بريدًا إلكترونيًا صحيحًا",
+  "passwordRequired": "كلمة المرور مطلوبة",
+  "passwordTooShort": "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+
+  "createAccountTitle": "إنشاء حساب",
+  "startTrackingToday": "ابدأ بتتبع صحتك اليوم",
+  "phoneNumber": "رقم الهاتف",
+  "confirmPassword": "تأكيد كلمة المرور",
+  "alreadyHaveAccount": "لديك حساب بالفعل؟",
+  "signInLink": "تسجيل الدخول",
+  "nameRequired": "الاسم مطلوب",
+  "nameShort": "أدخل اسمك الكامل",
+  "phoneRequired": "رقم الهاتف مطلوب",
+  "phoneInvalid": "أدخل رقم هاتف صحيح",
+  "confirmPasswordRequired": "الرجاء تأكيد كلمة المرور",
+  "passwordsDoNotMatch": "كلمتا المرور غير متطابقتين",
+  "passwordStrengthLabel": "قوة كلمة المرور: {level}",
+  "@passwordStrengthLabel": {
+    "placeholders": {
+      "level": { "type": "String" }
+    }
+  },
+  "passwordWeak": "ضعيفة",
+  "passwordMedium": "متوسطة",
+  "passwordStrong": "قوية",
+
+  "resetPasswordTitle": "إعادة تعيين كلمة المرور",
+  "resetPasswordSubtitle": "أدخل بريدك الإلكتروني وسنرسل لك رابطًا لإعادة تعيين كلمة المرور.",
+  "sendResetLink": "إرسال الرابط",
+  "checkInbox": "تحقق من بريدك الوارد",
+  "resetLinkSentTo": "أرسلنا رابط إعادة تعيين كلمة المرور إلى\n{email}",
+  "@resetLinkSentTo": {
+    "placeholders": {
+      "email": { "type": "String" }
+    }
+  },
+  "backToSignIn": "العودة لتسجيل الدخول",
+
+  "noHistoryYet": "لا يوجد سجل بعد",
+  "noHistorySubtitle": "احسب مؤشر كتلة جسمك في التبويب الرئيسي وسيظهر سجلك هنا.",
+  "today": "اليوم",
+  "yesterday": "أمس",
+  "yourProgress": "تقدمك",
+  "entriesCount": "{count} إدخالات",
+  "@entriesCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "entryCount": "{count} إدخال",
+  "@entryCount": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "average": "متوسط",
+  "lowest": "أدنى",
+  "highest": "أعلى",
+  "trend": "الاتجاه",
+  "deleteRecordTitle": "حذف السجل؟",
+  "deleteRecordContent": "سيؤدي هذا إلى حذف سجل مؤشر كتلة الجسم نهائيًا.",
+  "failedToLoadHistory": "فشل تحميل السجل",
+  "retry": "إعادة المحاولة",
+
+  "avgBmi": "متوسط المؤشر",
+  "latestBmi": "آخر قراءة",
+  "bestBmi": "أفضل قراءة",
+  "bmiTrend": "اتجاه المؤشر",
+  "lastNMeasurements": "آخر {count} قياسات",
+  "@lastNMeasurements": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "categoryDistribution": "توزيع الفئات",
+  "basedOnAllRecords": "بناءً على {count} سجل",
+  "@basedOnAllRecords": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "recentMeasurements": "القياسات الأخيرة",
+  "last5Entries": "آخر 5 إدخالات",
+  "noDataYet": "لا توجد بيانات بعد",
+  "noDataSubtitle": "ابدأ بتتبع مؤشر كتلة جسمك وستظهر إحصاءاتك هنا."
+}
