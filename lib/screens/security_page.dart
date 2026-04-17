@@ -328,23 +328,54 @@ class _SecurityPageState extends State<SecurityPage> {
                           '${_config?.recoveryCodesRemaining ?? 0} code(s) available',
                         ),
                         trailing: TextButton(
-                          onPressed: () {
+                          onPressed: () async {
                             // View recovery codes
-                            showDialog(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Recovery Codes'),
-                                content: const Text(
-                                  'Save these codes in a safe place. Each code can be used once if you lose access to all 2FA methods.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context),
-                                    child: const Text('Close'),
+                            final userId = SessionService.userId;
+                            if (userId == null) return;
+
+                            final codes = await TwoFactorService.getRecoveryCodes(userId);
+                            if (mounted) {
+                              showDialog(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Recovery Codes'),
+                                  content: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Save these codes in a safe place. Each code can be used once if you lose access to all 2FA methods.',
+                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Container(
+                                          padding: const EdgeInsets.all(12),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: SelectableText(
+                                            codes.join('\n'),
+                                            style: const TextStyle(
+                                              fontFamily: 'Courier',
+                                              fontSize: 12,
+                                              letterSpacing: 2,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ],
-                              ),
-                            );
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      child: const Text('Close'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
                           },
                           child: const Text('View'),
                         ),

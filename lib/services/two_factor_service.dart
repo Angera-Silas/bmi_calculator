@@ -458,9 +458,7 @@ class TwoFactorService {
   /// Check if device supports biometric authentication
   static Future<bool> canUseBiometric() async {
     try {
-      final isDeviceSupported = await _localAuth.canCheckBiometrics;
-      final isDeviceSecure = await _localAuth.deviceSupportsBiometrics;
-      return isDeviceSupported || isDeviceSecure;
+      return await _localAuth.canCheckBiometrics;
     } catch (e) {
       print('Error checking biometric support: $e');
       return false;
@@ -575,6 +573,17 @@ class TwoFactorService {
   }
 
   // ── Recovery Codes ────────────────────────────────────────────────────────
+
+  /// Get list of unused recovery codes for display
+  static Future<List<String>> getRecoveryCodes(String userId) async {
+    try {
+      final codes = await AppDatabase.getUnusedBackupCodes(userId);
+      return codes.map((c) => c['code'] as String).toList();
+    } catch (e) {
+      print('Error fetching recovery codes: $e');
+      return [];
+    }
+  }
 
   /// Verify and use a recovery code
   static Future<bool> verifyRecoveryCode(String userId, String code) async {
