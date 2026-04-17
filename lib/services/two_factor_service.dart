@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:otp/otp.dart';
 import '../database/app_database.dart';
 import '../models/two_factor_config.dart';
@@ -16,6 +17,7 @@ class TwoFactorService {
 
   static final _secureStorage = FlutterSecureStorage();
   static final _firebaseAuth = FirebaseAuth.instance;
+  static final _localAuth = LocalAuthentication();
 
   /// Get user's 2FA configuration
   static Future<TwoFactorConfig?> getConfig(String userId) async {
@@ -453,9 +455,42 @@ class TwoFactorService {
 
   // ── Passkeys (WebAuthn) ────────────────────────────────────────────────────
 
-  /// Enroll passkey as 2FA method
+  /// Check if device supports biometric authentication
+  static Future<bool> canUseBiometric() async {
+    try {
+      final isDeviceSupported = await _localAuth.canCheckBiometrics;
+      final isDeviceSecure = await _localAuth.deviceSupportsBiometrics;
+      return isDeviceSupported || isDeviceSecure;
+    } catch (e) {
+      print('Error checking biometric support: $e');
+      return false;
+    }
+  }
+
+  /// Get available biometric types
+  static Future<List<BiometricType>> getAvailableBiometrics() async {
+    try {
+      return await _localAuth.getAvailableBiometrics();
+    } catch (e) {
+      print('Error getting available biometrics: $e');
+      return [];
+    }
+  }
+
+  /// Enroll passkey as 2FA method (stores enrollment marker)
   static Future<String?> enrollPasskey(String userId) async {
     try {
+      // Check biometric support
+      if (!await canUseBiometric()) {
+        return 'This device does not support biometric authentication.';
+      }
+
+      // Store passkey enrollment marker
+      await _secureStorage.write(
+        key: '$_passkeyKeyPrefix$userId',
+        value: 'enrolled',
+      );
+
       final config = await getConfig(userId) ??
           TwoFactorConfig(
             userId: userId,
@@ -463,15 +498,14 @@ class TwoFactorService {
             isEnabled: false,
           );
 
-      // Passkey enrollment handled in platform-specific code
-      // Just update config here
       final updatedConfig = config.copyWith(
         enrolledMethods: [
           ...config.enrolledMethods,
           TwoFactorMethod.passkey,
         ]..toSet().toList(),
         primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.passkey : config.primaryMethod,
-        passkeyCredentialEncrypted: 'enrolled', // Marker
+        passkeyCredentialEncrypted: 'verified',
+        isEnabled: config.enrolledMethods.isEmpty, // Enable if first method
       );
 
       await AppDatabase.save2faConfig(updatedConfig.toSqlite());
@@ -479,6 +513,34 @@ class TwoFactorService {
     } catch (e) {
       print('Error enrolling passkey: $e');
       return 'Failed to enroll passkey.';
+    }
+  }
+
+  /// Verify passkey using biometric authentication
+  static Future<bool> verifyPasskey(String userId) async {
+    try {
+      final isEnrolled = await _secureStorage.read(key: '$_passkeyKeyPrefix$userId');
+      if (isEnrolled == null) {
+        return false; // Passkey not enrolled
+      }
+
+      // Attempt biometric verification
+      try {
+        final isAuthenticated = await _localAuth.authenticate(
+          localizedReason: 'Authenticate with your biometric to verify identity',
+          options: const AuthenticationOptions(
+            stickyAuth: true,
+            biometricOnly: true,
+          ),
+        );
+        return isAuthenticated;
+      } on Exception catch (e) {
+        print('Biometric authentication error: $e');
+        return false;
+      }
+    } catch (e) {
+      print('Error verifying passkey: $e');
+      return false;
     }
   }
 

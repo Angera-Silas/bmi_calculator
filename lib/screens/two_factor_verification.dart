@@ -90,8 +90,8 @@ class _TwoFactorVerificationScreenState
           );
           break;
         case TwoFactorMethod.passkey:
-          // Passkey verification is platform-specific, skip for now
-          isValid = false;
+          // Verify with biometric authentication
+          isValid = await TwoFactorService.verifyPasskey(userId);
           break;
       }
 
@@ -287,83 +287,146 @@ class _TwoFactorVerificationScreenState
           const SizedBox(height: kSpaceLG),
         ],
 
-        // OTP Input
-        Text(
-          'Enter ${_getMethodLabel(_selectedMethod)}',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: DynamicColors.textSecondary(context),
-            letterSpacing: 0.3,
+        // OTP Input (conditionally show for non-passkey methods)
+        if (_selectedMethod != TwoFactorMethod.passkey) ...[
+          Text(
+            'Enter ${_getMethodLabel(_selectedMethod)}',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: DynamicColors.textSecondary(context),
+              letterSpacing: 0.3,
+            ),
           ),
-        ),
-        const SizedBox(height: kSpaceXS),
-        Text(
-          _getOtpHelpText(_selectedMethod),
-          style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
-        ),
-        const SizedBox(height: kSpaceMD),
+          const SizedBox(height: kSpaceXS),
+          Text(
+            _getOtpHelpText(_selectedMethod),
+            style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+          ),
+          const SizedBox(height: kSpaceMD),
 
-        TextField(
-          controller: _otpController,
-          keyboardType: TextInputType.number,
-          maxLength: 6,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 8,
-            color: DynamicColors.textPrimary(context),
-          ),
-          decoration: InputDecoration(
-            hintText: '000000',
-            hintStyle: TextStyle(
-              color: DynamicColors.textSecondary(context).withOpacity(0.3),
+          TextField(
+            controller: _otpController,
+            keyboardType: TextInputType.number,
+            maxLength: 6,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 8,
+              color: DynamicColors.textPrimary(context),
             ),
-            counterText: '',
-            filled: true,
-            fillColor: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(kRadiusMD),
-              borderSide: BorderSide(color: DynamicColors.border(context)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(kRadiusMD),
-              borderSide: BorderSide(color: DynamicColors.border(context)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(kRadiusMD),
-              borderSide: const BorderSide(color: kAccent, width: 2),
-            ),
-          ),
-        ),
-        const SizedBox(height: kSpaceLG),
-
-        // Verify Button
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _verifyOtp,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: kAccent,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
+            decoration: InputDecoration(
+              hintText: '000000',
+              hintStyle: TextStyle(
+                color: DynamicColors.textSecondary(context).withOpacity(0.3),
+              ),
+              counterText: '',
+              filled: true,
+              fillColor: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
+              border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(kRadiusMD),
+                borderSide: BorderSide(color: DynamicColors.border(context)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(kRadiusMD),
+                borderSide: BorderSide(color: DynamicColors.border(context)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(kRadiusMD),
+                borderSide: const BorderSide(color: kAccent, width: 2),
               ),
             ),
-            child: _isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text('Verify', style: kLargeButtonTextStyle),
           ),
-        ),
+          const SizedBox(height: kSpaceLG),
+
+          // Verify Button
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _verifyOtp,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(kRadiusMD),
+                ),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Verify', style: kLargeButtonTextStyle),
+            ),
+          ),
+        ] else ...[
+          // Passkey verification (biometric)
+          Text(
+            'Use your device biometric to verify',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: DynamicColors.textSecondary(context),
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: kSpaceXS),
+          Text(
+            'Use your fingerprint or face ID',
+            style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+          ),
+          const SizedBox(height: kSpaceLG),
+
+          // Biometric Icon
+          Center(
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: kAccent.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.fingerprint,
+                size: 48,
+                color: kAccent,
+              ),
+            ),
+          ),
+          const SizedBox(height: kSpaceLG),
+
+          // Verify with Biometric Button
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _verifyOtp,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: kAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(kRadiusMD),
+                ),
+              ),
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Text('Verify with Biometric', style: kLargeButtonTextStyle),
+            ),
+          ),
+        ],
         if (_attemptCount > 0 && !_showRecoveryCodeInput) ...[
           const SizedBox(height: kSpaceXS),
           Text(
