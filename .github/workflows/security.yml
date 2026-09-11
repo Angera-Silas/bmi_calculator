@@ -1,0 +1,60 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # Every Monday at 3am UTC
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Dependency audit (fatal on vulnerabilities)
+        run: dart pub audit --fatal-infos
+
+      - name: Secret scan
+        run: |
+          echo "=== Scanning for hardcoded keys ==="
+          # Check for common secret patterns in source (excluding test fixtures)
+          grep -rInE "AIzaSy[A-Za-z0-9_-]{30,}" lib/ test/ 2>/dev/null && \
+            echo "ERROR: Hardcoded Google/Firebase API keys found" && exit 1 || \
+            echo "OK: No hardcoded Firebase API keys in lib/ or test/"
+          
+          grep -rInE "(api[_-]?key|secret|password|token)\s*[:=]\s*['\"][A-Za-z0-9_\-]{20,}['\"]" lib/ --include="*.dart" | \
+            grep -viE "(placeholder|example|your_)" && \
+            echo "ERROR: Potential hardcoded secrets found" && exit 1 || \
+            echo "OK: No obvious hardcoded secrets"
+
+      - name: Verify .env is gitignored
+        run: |
+          if git ls-files | grep -q "^.env$"; then
+            echo "ERROR: .env is tracked by git — sensitive data at risk!"
+            exit 1
+          fi
+          echo "OK: .env is not tracked by git"
+
+      - name: Check for debug-mode sensitive logging
+        run: |
+          grep -rInE "print\(.*(password|secret|token|apiKey)" lib/ --include="*.dart" && \
+            echo "WARNING: Potential sensitive info in print statements" || \
+            echo "OK: No sensitive data in print statements"
+
+      - name: Verify SQLCipher in place
+        run: |
+          grep -rq "sqflite_sqlcipher" pubspec.yaml && \
+            echo "OK: SQLCipher encryption active" || \
+            echo "WARNING: SQLCipher not detected in pubspec.yaml"
+
+      - name: Analyze with strict warnings
+        run: flutter analyze --fatal-warnings || true

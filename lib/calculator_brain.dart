@@ -6,6 +6,10 @@ import 'models/age_group.dart';
 import 'models/bmi_reference.dart';
 import 'models/pregnancy_status.dart';
 import 'models/health_condition.dart';
+import 'models/waist_to_height_ratio.dart';
+import 'models/body_fat_percentage.dart';
+import 'models/metabolic_age.dart';
+import 'models/vo2max.dart';
 
 /// WHO BMI classification (age and gender-aware).
 ///
@@ -18,18 +22,25 @@ import 'models/health_condition.dart';
 enum BMICategory {
   /// BMI < 16.0
   severeThinness,
+
   /// BMI 16.0 – 16.99
   moderateThinness,
+
   /// BMI 17.0 – 18.49
   mildThinness,
+
   /// BMI 18.5 – 24.99
   normalRange,
+
   /// BMI 25.0 – 29.99
   preObese,
+
   /// BMI 30.0 – 34.99
   obeseClassI,
+
   /// BMI 35.0 – 39.99
   obeseClassII,
+
   /// BMI ≥ 40.0
   obeseClassIII,
 }
@@ -43,6 +54,10 @@ class CalculatorBrain {
     required this.userProfile,
     this.age = 25,
     this.isMale = true,
+    this.waistCircumferenceCm,
+    this.neckCircumferenceCm,
+    this.hipCircumferenceCm,
+    this.restingHeartRateBpm,
   }) {
     if (height <= 0 || weight <= 0) {
       throw ArgumentError('Height and weight must be greater than zero.');
@@ -55,6 +70,10 @@ class CalculatorBrain {
     required this.weight,
     this.age = 25,
     this.isMale = true,
+    this.waistCircumferenceCm,
+    this.neckCircumferenceCm,
+    this.hipCircumferenceCm,
+    this.restingHeartRateBpm,
   }) : userProfile = UserProfile(age: age, isMale: isMale) {
     if (height <= 0 || weight <= 0) {
       throw ArgumentError('Height and weight must be greater than zero.');
@@ -67,6 +86,12 @@ class CalculatorBrain {
   final bool isMale; // for backward compatibility
   final UserProfile userProfile;
 
+  // ── Advanced body measurements (Phase 1) ─────────────────────────────────
+  final double? waistCircumferenceCm;
+  final double? neckCircumferenceCm;
+  final double? hipCircumferenceCm; // required by the female body-fat formula
+  final int? restingHeartRateBpm;
+
   late final double _bmi = weight / pow(height / 100, 2);
 
   double get bmiValue => double.parse(_bmi.toStringAsFixed(1));
@@ -77,7 +102,8 @@ class CalculatorBrain {
 
   /// Get BMI thresholds for this user's age and gender.
   Map<String, BMIRange> get _thresholds =>
-      BMIReference.getThresholdsForAge(userProfile.age, isMale: userProfile.isMale);
+      BMIReference.getThresholdsForAge(userProfile.age,
+          isMale: userProfile.isMale);
 
   /// Get the category name based on age/gender-specific thresholds.
   String getResult() {
@@ -232,8 +258,7 @@ class CalculatorBrain {
   // ── Gauge helper ───────────────────────────────────────────────────────────
 
   /// Normalised 0.0–1.0 position on the 15–40 BMI arc.
-  double get gaugeProgress =>
-      ((_bmi - 15.0) / (40.0 - 15.0)).clamp(0.0, 1.0);
+  double get gaugeProgress => ((_bmi - 15.0) / (40.0 - 15.0)).clamp(0.0, 1.0);
 
   // ── Age-appropriateness note ───────────────────────────────────────────────
 
@@ -261,18 +286,69 @@ class CalculatorBrain {
     final warnings = <String>[];
     final bmi = _bmi;
 
-    if (bmi > 30 && userProfile.healthConditions.toString().contains('Diabetes')) {
-      warnings.add('⚠️ High BMI with diabetes requires close medical monitoring.');
+    if (bmi > 30 &&
+        userProfile.healthConditions.toString().contains('Diabetes')) {
+      warnings
+          .add('⚠️ High BMI with diabetes requires close medical monitoring.');
     }
 
     if (bmi > 25 && userProfile.healthConditions.toString().contains('Heart')) {
-      warnings.add('⚠️ Excess weight combined with heart disease requires medical oversight.');
+      warnings.add(
+          '⚠️ Excess weight combined with heart disease requires medical oversight.');
     }
 
     if (userProfile.isPregnant && bmi < 16) {
-      warnings.add('⚠️ Severe underweight during pregnancy requires immediate medical attention.');
+      warnings.add(
+          '⚠️ Severe underweight during pregnancy requires immediate medical attention.');
     }
 
     return warnings.isNotEmpty ? warnings.join('\n') : null;
+  }
+
+  // ── Advanced Health Metrics (Phase 1) ─────────────────────────────────────
+
+  /// Waist-to-height ratio — null unless a waist measurement was provided.
+  WaistToHeightRatio? get waistToHeightRatio {
+    final waist = waistCircumferenceCm;
+    if (waist == null) return null;
+    return WaistToHeightRatio(waistCm: waist, heightCm: height.toDouble());
+  }
+
+  /// Body fat percentage (US Navy method) — null unless waist + neck (+ hip
+  /// for females) were provided.
+  BodyFatPercentage? get bodyFatPercentage {
+    final waist = waistCircumferenceCm;
+    final neck = neckCircumferenceCm;
+    if (waist == null || neck == null) return null;
+    try {
+      return BodyFatPercentage(
+        waistCm: waist,
+        neckCm: neck,
+        heightCm: height.toDouble(),
+        isMale: userProfile.isMale,
+        hipCm: userProfile.isMale ? null : hipCircumferenceCm,
+      );
+    } catch (_) {
+      return null; // Incomplete/invalid body-fat inputs — hide the card.
+    }
+  }
+
+  /// Metabolic age estimate based on this profile's BMR.
+  /// Uses [MetabolicAge.estimate] with the Mifflin-St Jeor result.
+  MetabolicAge? get metabolicAge => MetabolicAge.estimate(
+        bmr: calculateBMR(),
+        age: userProfile.age,
+        isMale: userProfile.isMale,
+      );
+
+  /// VO2max estimate from resting heart rate — null unless an RHR was given.
+  Vo2Max? get vo2max {
+    final rhr = restingHeartRateBpm;
+    if (rhr == null) return null;
+    return Vo2Max(
+      restingHeartRateBpm: rhr,
+      age: userProfile.age,
+      isMale: userProfile.isMale,
+    );
   }
 }

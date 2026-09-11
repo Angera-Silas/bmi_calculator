@@ -1,8 +1,11 @@
 import 'dart:ui';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
 import 'generated/l10n/app_localizations.dart';
@@ -10,25 +13,53 @@ import 'login_page.dart';
 import 'registration_page.dart';
 import 'reset_password.dart';
 import 'screens/input_page.dart';
+import 'screens/achievements_screen.dart';
+import 'screens/export_screen.dart';
 import 'screens/profile.dart';
+import 'screens/reminder_settings.dart';
 import 'screens/security_page.dart';
 import 'screens/splash_screen.dart';
+import 'screens/wearable_settings.dart';
 import 'database/app_database.dart';
 import 'services/locale_service.dart';
 import 'services/session_service.dart';
 import 'services/sync_service.dart';
 import 'services/connectivity_service.dart';
+import 'services/secure_config_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Initialize secure configuration first
+  await SecureConfigService.initialize();
+
+  // Validate Firebase configuration
+  if (!SecureConfigService.isFirebaseConfigured()) {
+    debugPrint(
+        'Warning: Firebase configuration is incomplete. Using fallback values.');
+  }
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+// Enable Firebase App Check (Play Integrity on Android release,
+  // DeviceCheck/App Attest on iOS, debug provider for local dev).
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    await FirebaseAppCheck.instance.activate(
+      androidProvider:
+          kDebugMode ? AndroidProvider.debug : AndroidProvider.playIntegrity,
+    );
+  } else if (!kIsWeb) {
+    await FirebaseAppCheck.instance.activate();
+  }
 
   // Initialize services before app starts
   await SessionService.initialize();
   await AppDatabase.database; // triggers database creation
+
+  // Initialize local notifications (smart reminders, Sprint 2.3)
+  await NotificationService.initialize();
 
   FlutterError.onError = (errorDetails) {
     FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
@@ -51,7 +82,7 @@ void main() async {
   // Load persisted locale before starting app
   final savedLocale = await LocaleService.getLocale();
 
-  runApp(BMICalculatorApp(initialLocale: savedLocale));
+  runApp(ProviderScope(child: BMICalculatorApp(initialLocale: savedLocale)));
 }
 
 class BMICalculatorApp extends StatefulWidget {
@@ -253,6 +284,10 @@ class _BMICalculatorAppState extends State<BMICalculatorApp> {
         '/input': (_) => const InputPage(),
         '/profile': (_) => const ProfilePage(),
         '/security': (_) => const SecurityPage(),
+        '/reminders': (_) => const ReminderSettingsScreen(),
+        '/achievements': (_) => const AchievementsScreen(),
+        '/wearable': (_) => const WearableSettingsScreen(),
+        '/export': (_) => const ExportScreen(),
       },
     );
   }

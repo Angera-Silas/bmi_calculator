@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSHealthShareUsageDescription</key>
+	<string>This app reads your weight, height, steps, heart rate, blood pressure and glucose data so you can track your BMI and health metrics alongside your record history.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>This app does not write health data; it only reads what you allow for BMI and health tracking.</string>
 </dict>
 </plist>

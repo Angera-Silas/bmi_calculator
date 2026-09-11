@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'constants.dart';
 import 'generated/l10n/app_localizations.dart';
 import 'services/auth_service.dart';
@@ -22,6 +23,16 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _obscurePassword = true;
   bool _isLoading = false;
+  static const _socialProviders = [
+    ('google', 'Google'),
+    ('microsoft', 'Microsoft'),
+    ('facebook', 'Facebook'),
+    ('twitter', 'Twitter'),
+    ('apple', 'Apple'),
+    ('github', 'GitHub'),
+    ('instagram', 'Instagram'),
+    ('tiktok', 'TikTok'),
+  ];
 
   @override
   void dispose() {
@@ -48,7 +59,8 @@ class _LoginPageState extends State<LoginPage> {
           content: Text(error),
           backgroundColor: kErrorColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(kRadiusSM)),
         ),
       );
     } else {
@@ -71,10 +83,11 @@ class _LoginPageState extends State<LoginPage> {
 
     if (is2faEnabled) {
       // Generate device ID for device trust checking
-      final deviceId = '${DateTime.now().millisecondsSinceEpoch}_device';
+      final deviceId = await TwoFactorService.getOrCreateDeviceId();
 
       // Check if this device is trusted
-      final isTrusted = await TwoFactorService.isDeviceTrusted(userId, deviceId);
+      final isTrusted =
+          await TwoFactorService.isDeviceTrusted(userId, deviceId);
 
       if (isTrusted && mounted) {
         // Device is trusted, skip 2FA and go directly to input
@@ -120,19 +133,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _socialLogin(String provider) async {
     setState(() => _isLoading = true);
-    String? error;
-
-    switch (provider) {
-      case 'google':
-        error = await AuthService.loginWithGoogle();
-        break;
-      case 'apple':
-        error = await AuthService.loginWithApple();
-        break;
-      case 'facebook':
-        error = await AuthService.loginWithFacebook();
-        break;
-    }
+    final error = await AuthService.loginWithProvider(provider);
 
     if (!mounted) return;
     setState(() => _isLoading = false);
@@ -151,7 +152,8 @@ class _LoginPageState extends State<LoginPage> {
           content: Text(error),
           backgroundColor: kErrorColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(kRadiusSM)),
         ),
       );
     }
@@ -196,7 +198,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       borderRadius: BorderRadius.circular(kRadiusMD),
                     ),
-                    child: const Icon(Icons.monitor_weight_outlined, color: Colors.white, size: 38),
+                    child: const Icon(Icons.monitor_weight_outlined,
+                        color: Colors.white, size: 38),
                   ),
                 ),
                 const SizedBox(height: kSpaceLG),
@@ -232,7 +235,9 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: kSpaceXS),
                 Text(
                   AppLocalizations.of(context).signInToContinue,
-                  style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
+                  style: TextStyle(
+                      color: DynamicColors.textSecondary(context),
+                      fontSize: 14),
                 ),
                 const SizedBox(height: kSpaceLG),
 
@@ -250,7 +255,8 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   validator: (v) {
                     final l10n = AppLocalizations.of(context);
-                    if (v == null || v.trim().isEmpty) return l10n.emailRequired;
+                    if (v == null || v.trim().isEmpty)
+                      return l10n.emailRequired;
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
                       return l10n.emailInvalid;
                     }
@@ -272,16 +278,20 @@ class _LoginPageState extends State<LoginPage> {
                     icon: Icons.lock_outline,
                     suffix: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: DynamicColors.iconColor(context),
                         size: 20,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (v) {
                     final l10n = AppLocalizations.of(context);
-                    if (v == null || v.trim().isEmpty) return l10n.passwordRequired;
+                    if (v == null || v.trim().isEmpty)
+                      return l10n.passwordRequired;
                     if (v.length < 6) return l10n.passwordTooShort;
                     return null;
                   },
@@ -298,7 +308,10 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: Text(
                       AppLocalizations.of(context).forgotPassword,
-                      style: TextStyle(color: kAccent, fontWeight: FontWeight.w600, fontSize: 13),
+                      style: TextStyle(
+                          color: kAccent,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13),
                     ),
                   ),
                 ),
@@ -328,7 +341,8 @@ class _LoginPageState extends State<LoginPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : Text(AppLocalizations.of(context).signIn, style: kLargeButtonTextStyle),
+                        : Text(AppLocalizations.of(context).signIn,
+                            style: kLargeButtonTextStyle),
                   ),
                 ),
                 const SizedBox(height: kSpaceLG),
@@ -346,7 +360,8 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: kSpaceMD),
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: kSpaceMD),
                           child: Text(
                             'OR',
                             style: TextStyle(
@@ -365,26 +380,19 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: kSpaceMD),
 
-                    // Social buttons
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildSocialButton(
-                          icon: Icons.g_mobiledata,
-                          label: 'Google',
-                          onPressed: () => _socialLogin('google'),
-                        ),
-                        _buildSocialButton(
-                          icon: Icons.apple,
-                          label: 'Apple',
-                          onPressed: () => _socialLogin('apple'),
-                        ),
-                        _buildSocialButton(
-                          icon: Icons.facebook,
-                          label: 'Facebook',
-                          onPressed: () => _socialLogin('facebook'),
-                        ),
-                      ],
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: kSpaceSM,
+                      runSpacing: kSpaceSM,
+                      children: _socialProviders
+                          .map(
+                            (provider) => _buildSocialButton(
+                              icon: _socialIcon(provider.$1),
+                              label: provider.$2,
+                              onPressed: () => _socialLogin(provider.$1),
+                            ),
+                          )
+                          .toList(),
                     ),
                     const SizedBox(height: kSpaceLG),
                   ],
@@ -413,10 +421,13 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     Text(
                       '${AppLocalizations.of(context).dontHaveAccount} ',
-                      style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
+                      style: TextStyle(
+                          color: DynamicColors.textSecondary(context),
+                          fontSize: 14),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacementNamed(context, '/register'),
+                      onTap: () =>
+                          Navigator.pushReplacementNamed(context, '/register'),
                       child: Text(
                         AppLocalizations.of(context).createOne,
                         style: TextStyle(
@@ -456,12 +467,14 @@ class _LoginPageState extends State<LoginPage> {
     final isDark = DynamicColors.isDark(context);
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: DynamicColors.textSecondary(context).withOpacity(0.5)),
+      hintStyle: TextStyle(
+          color: DynamicColors.textSecondary(context).withOpacity(0.5)),
       prefixIcon: Icon(icon, color: DynamicColors.iconColor(context), size: 20),
       suffixIcon: suffix,
       filled: true,
       fillColor: isDark ? kDarkCard : kLightCard,
-      contentPadding: const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: 14),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(kRadiusMD),
         borderSide: BorderSide(color: DynamicColors.border(context)),
@@ -486,13 +499,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildSocialButton({
-    required IconData icon,
+    required Widget icon,
     required String label,
     required VoidCallback onPressed,
   }) {
     return SizedBox(
-      width: 80,
-      height: 80,
+      width: 88,
+      height: 88,
       child: Column(
         children: [
           Material(
@@ -510,10 +523,12 @@ class _LoginPageState extends State<LoginPage> {
                     color: DynamicColors.border(context),
                   ),
                 ),
-                child: Icon(
-                  icon,
-                  size: 28,
-                  color: DynamicColors.textPrimary(context),
+                child: IconTheme(
+                  data: IconThemeData(
+                    size: 24,
+                    color: DynamicColors.textPrimary(context),
+                  ),
+                  child: Center(child: icon),
                 ),
               ),
             ),
@@ -531,5 +546,28 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
     );
+  }
+
+  Widget _socialIcon(String provider) {
+    switch (provider) {
+      case 'google':
+        return const FaIcon(FontAwesomeIcons.google);
+      case 'microsoft':
+        return const FaIcon(FontAwesomeIcons.microsoft);
+      case 'facebook':
+        return const FaIcon(FontAwesomeIcons.facebook);
+      case 'twitter':
+        return const FaIcon(FontAwesomeIcons.xTwitter);
+      case 'apple':
+        return const FaIcon(FontAwesomeIcons.apple);
+      case 'github':
+        return const FaIcon(FontAwesomeIcons.github);
+      case 'instagram':
+        return const FaIcon(FontAwesomeIcons.instagram);
+      case 'tiktok':
+        return const FaIcon(FontAwesomeIcons.tiktok);
+      default:
+        return const Icon(Icons.login);
+    }
   }
 }

@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../constants.dart';
 import '../generated/l10n/app_localizations.dart';
 import '../services/session_service.dart';
+import '../services/notification_service.dart';
+import '../providers/reminder_provider.dart';
+import '../providers/session_provider.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
+class _SplashScreenState extends ConsumerState<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnim;
@@ -47,6 +51,19 @@ class _SplashScreenState extends State<SplashScreen>
     await SessionService.initialize();
     if (!mounted) return;
     final hasSession = SessionService.hasSession;
+
+    if (hasSession) {
+      // Mirror session into Riverpod and queue smart reminders for this user.
+      ref.read(sessionProvider.notifier).refresh();
+      await NotificationService.requestPermission();
+      try {
+        await ref.read(reminderProvider.future);
+      } catch (_) {
+        // Reminder seeding/scheduling must never block navigation.
+      }
+    }
+
+    if (!mounted) return;
     Navigator.pushReplacementNamed(context, hasSession ? '/input' : '/login');
   }
 

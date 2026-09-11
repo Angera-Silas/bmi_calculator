@@ -45,3 +45,10 @@ app.*.map.json
 /android/app/google-services.json
 /android/app/bmicalc-release-key.jks
 /android/app/bmicalc.keystore
+/android/keystore.properties
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+.env.example

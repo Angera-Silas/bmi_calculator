@@ -28,5 +28,34 @@ service cloud.firestore {
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.userId == request.auth.uid;
     }
+
+    // ── Blood Pressure ─────────────────────────────────────────────────────────
+    // Same ownership model as `history`. Create tags the doc with the caller's
+    // uid; everything else is owner-only.
+    match /blood_pressure/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow read, delete: if request.auth != null
+                          && resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid;
+    }
+
+    // ── Blood Sugar ───────────────────────────────────────────────────────────
+    // Same ownership model as `history`.
+    match /blood_sugar/{docId} {
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid;
+
+      allow read, delete: if request.auth != null
+                          && resource.data.userId == request.auth.uid;
+
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.userId == request.auth.uid;
+    }
   }
 }

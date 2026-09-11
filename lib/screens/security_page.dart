@@ -55,7 +55,7 @@ class _SecurityPageState extends State<SecurityPage> {
 
   Future<void> _enrollNewMethod(TwoFactorMethod method) async {
     final userId = SessionService.userId;
-    final userEmail = _config?.userId ?? 'user@bmi.app'; // Use a placeholder
+    final userEmail = SessionService.userEmail ?? 'user@bmi.app';
 
     if (userId == null) return;
 
@@ -155,16 +155,20 @@ class _SecurityPageState extends State<SecurityPage> {
       String? error;
       switch (method) {
         case TwoFactorMethod.totp:
-          error = await TwoFactorService.removeTotpMethod(SessionService.userId!);
+          error =
+              await TwoFactorService.removeTotpMethod(SessionService.userId!);
           break;
         case TwoFactorMethod.email:
-          error = await TwoFactorService.removeEmailMethod(SessionService.userId!);
+          error =
+              await TwoFactorService.removeEmailMethod(SessionService.userId!);
           break;
         case TwoFactorMethod.sms:
-          error = await TwoFactorService.removeSmsMethod(SessionService.userId!);
+          error =
+              await TwoFactorService.removeSmsMethod(SessionService.userId!);
           break;
         case TwoFactorMethod.passkey:
-          error = await TwoFactorService.removePasskeyMethod(SessionService.userId!);
+          error = await TwoFactorService.removePasskeyMethod(
+              SessionService.userId!);
           break;
       }
 
@@ -235,6 +239,17 @@ class _SecurityPageState extends State<SecurityPage> {
     }
   }
 
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: kErrorColor,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -256,8 +271,12 @@ class _SecurityPageState extends State<SecurityPage> {
                       child: Row(
                         children: [
                           Icon(
-                            _config?.isEnabled ?? false ? Icons.verified : Icons.lock_open,
-                            color: (_config?.isEnabled ?? false) ? kNormalColor : Colors.grey,
+                            _config?.isEnabled ?? false
+                                ? Icons.verified
+                                : Icons.lock_open,
+                            color: (_config?.isEnabled ?? false)
+                                ? kNormalColor
+                                : Colors.grey,
                             size: 32,
                           ),
                           const SizedBox(width: 16),
@@ -267,7 +286,8 @@ class _SecurityPageState extends State<SecurityPage> {
                               children: [
                                 Text(
                                   'Two-Factor Authentication',
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style:
+                                      Theme.of(context).textTheme.titleMedium,
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
@@ -300,24 +320,32 @@ class _SecurityPageState extends State<SecurityPage> {
                           child: ListTile(
                             leading: Icon(_getMethodIcon(method)),
                             title: Text(_getMethodName(method)),
-                            subtitle: isSelected ? const Text('Primary method') : null,
+                            subtitle: isSelected
+                                ? const Text('Primary method')
+                                : null,
                             trailing: PopupMenuButton(
                               itemBuilder: (context) => [
-                                if (!isSelected && (_config?.enrolledMethods.length ?? 0) > 1)
+                                if (!isSelected &&
+                                    (_config?.enrolledMethods.length ?? 0) > 1)
                                   PopupMenuItem(
                                     child: const Text('Set as primary'),
                                     onTap: () async {
                                       final userId = SessionService.userId;
                                       if (userId == null) return;
-                                      final result = await TwoFactorService.setPrimaryMethod(userId, method);
+                                      final result = await TwoFactorService
+                                          .setPrimaryMethod(userId, method);
                                       if (mounted) {
                                         if (result == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text('${_getMethodName(method)} set as primary')),
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                                content: Text(
+                                                    '${_getMethodName(method)} set as primary')),
                                           );
                                           _refreshConfig();
                                         } else {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
                                             SnackBar(content: Text(result)),
                                           );
                                         }
@@ -344,8 +372,14 @@ class _SecurityPageState extends State<SecurityPage> {
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 12),
-                  ...[TwoFactorMethod.totp, TwoFactorMethod.email, TwoFactorMethod.sms, TwoFactorMethod.passkey]
-                      .where((method) => !(_config?.enrolledMethods.contains(method) ?? false))
+                  ...[
+                    TwoFactorMethod.totp,
+                    TwoFactorMethod.email,
+                    TwoFactorMethod.sms,
+                    TwoFactorMethod.passkey
+                  ]
+                      .where((method) =>
+                          !(_config?.enrolledMethods.contains(method) ?? false))
                       .map((method) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12.0),
@@ -380,7 +414,8 @@ class _SecurityPageState extends State<SecurityPage> {
                             final userId = SessionService.userId;
                             if (userId == null) return;
 
-                            final codes = await TwoFactorService.getRecoveryCodes(userId);
+                            final codes =
+                                await TwoFactorService.getRecoveryCodes(userId);
                             if (mounted) {
                               showDialog(
                                 context: context,
@@ -388,19 +423,23 @@ class _SecurityPageState extends State<SecurityPage> {
                                   title: const Text('Recovery Codes'),
                                   content: SingleChildScrollView(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         const Text(
                                           'Save these codes in a safe place. Each code can be used once if you lose access to all 2FA methods.',
-                                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                                          style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500),
                                         ),
                                         const SizedBox(height: 16),
                                         Container(
                                           padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
                                             color: Colors.grey[100],
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius:
+                                                BorderRadius.circular(8),
                                           ),
                                           child: SelectableText(
                                             codes.join('\n'),
@@ -444,7 +483,8 @@ class _SecurityPageState extends State<SecurityPage> {
                         return Card(
                           color: Colors.green[50],
                           child: ListTile(
-                            leading: Icon(Icons.verified_user, color: Colors.green[700]),
+                            leading: Icon(Icons.verified_user,
+                                color: Colors.green[700]),
                             title: const Text('This device is trusted'),
                             subtitle: Text('$remainingDays day(s) remaining'),
                             trailing: TextButton(
@@ -456,9 +496,11 @@ class _SecurityPageState extends State<SecurityPage> {
                       } else {
                         return Card(
                           child: ListTile(
-                            leading: Icon(Icons.laptop, color: Colors.grey[600]),
+                            leading:
+                                Icon(Icons.laptop, color: Colors.grey[600]),
                             title: const Text('This device is not trusted'),
-                            subtitle: const Text('Trust this device to skip 2FA on next login'),
+                            subtitle: const Text(
+                                'Trust this device to skip 2FA on next login'),
                           ),
                         );
                       }

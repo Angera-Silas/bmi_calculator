@@ -7,7 +7,6 @@ import 'package:otp/otp.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/app_database.dart';
 import '../models/two_factor_config.dart';
-import 'session_service.dart';
 
 /// Manages 2FA enrollment, configuration, and verification
 class TwoFactorService {
@@ -16,6 +15,7 @@ class TwoFactorService {
   static const String _smsVerificationIdKeyPrefix = 'sms_verification_id_';
   static const String _passkeyKeyPrefix = 'passkey_';
   static const String _deviceTrustKeyPrefix = 'device_trust_';
+  static const String _deviceIdKey = 'device_id';
   static const String _otpRateLimitKeyPrefix = 'otp_rate_limit_';
 
   // Rate limiting: max 5 OTP requests per hour per method
@@ -51,7 +51,8 @@ class TwoFactorService {
   }
 
   /// Set primary 2FA method
-  static Future<String?> setPrimaryMethod(String userId, TwoFactorMethod method) async {
+  static Future<String?> setPrimaryMethod(
+      String userId, TwoFactorMethod method) async {
     try {
       final config = await getConfig(userId);
       if (config == null) {
@@ -98,13 +99,18 @@ class TwoFactorService {
   /// Verify a TOTP code
   static Future<bool> verifyTotpCode(String userId, String code) async {
     try {
-      final secret = await _secureStorage.read(key: '$_totpSecretKeyPrefix$userId');
+      final secret =
+          await _secureStorage.read(key: '$_totpSecretKeyPrefix$userId');
       if (secret == null) return false;
 
       // Simple TOTP verification (6-digit code)
       // Use OTP.generateTOTPCode to verify
       try {
-        final generatedCode = OTP.generateTOTPCode(secret, DateTime.now().millisecondsSinceEpoch);
+        String normalizeOtp(Object generatedCode) =>
+            generatedCode.toString().padLeft(6, '0');
+
+        final generatedCode = normalizeOtp(OTP.generateTOTPCode(
+            secret, DateTime.now().millisecondsSinceEpoch));
         if (code == generatedCode) return true;
 
         // Check window: ±1 time step (30 seconds each)
@@ -112,13 +118,13 @@ class TwoFactorService {
           secret,
           DateTime.now().subtract(Duration(seconds: 30)).millisecondsSinceEpoch,
         );
-        if (code == previousCode) return true;
+        if (code == normalizeOtp(previousCode)) return true;
 
         final nextCode = OTP.generateTOTPCode(
           secret,
           DateTime.now().add(Duration(seconds: 30)).millisecondsSinceEpoch,
         );
-        if (code == nextCode) return true;
+        if (code == normalizeOtp(nextCode)) return true;
 
         return false;
       } catch (_) {
@@ -153,7 +159,9 @@ class TwoFactorService {
           ...config.enrolledMethods,
           TwoFactorMethod.totp,
         ]..toSet().toList(), // Remove duplicates
-        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.totp : config.primaryMethod,
+        primaryMethod: config.enrolledMethods.isEmpty
+            ? TwoFactorMethod.totp
+            : config.primaryMethod,
         recoveryCodesRemaining: codes.length,
       );
 
@@ -168,7 +176,8 @@ class TwoFactorService {
   }
 
   /// Confirm TOTP enrollment (after user enters correct code)
-  static Future<String?> confirmTotpEnrollment(String userId, String totpCode) async {
+  static Future<String?> confirmTotpEnrollment(
+      String userId, String totpCode) async {
     try {
       if (!await verifyTotpCode(userId, totpCode)) {
         return 'Invalid authenticator code. Please try again.';
@@ -190,7 +199,8 @@ class TwoFactorService {
 
       // Return backup codes for user to save
       final backupCodes = await AppDatabase.getUnusedBackupCodes(userId);
-      final codesToDisplay = backupCodes.map((c) => c['code'] as String).toList();
+      final codesToDisplay =
+          backupCodes.map((c) => c['code'] as String).toList();
       return 'TOTP_ENROLLED|||${codesToDisplay.join('|||')}';
     } catch (e) {
       print('Error confirming TOTP: $e');
@@ -246,7 +256,9 @@ class TwoFactorService {
           ...config.enrolledMethods,
           TwoFactorMethod.email,
         ]..toSet().toList(),
-        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.email : config.primaryMethod,
+        primaryMethod: config.enrolledMethods.isEmpty
+            ? TwoFactorMethod.email
+            : config.primaryMethod,
         isEnabled: true, // Enable immediately
       );
 
@@ -371,7 +383,9 @@ class TwoFactorService {
           ...config.enrolledMethods,
           TwoFactorMethod.sms,
         ]..toSet().toList(),
-        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.sms : config.primaryMethod,
+        primaryMethod: config.enrolledMethods.isEmpty
+            ? TwoFactorMethod.sms
+            : config.primaryMethod,
         smsPhoneEncrypted: 'verified',
         isEnabled: config.enrolledMethods.isEmpty, // Enable if first method
       );
@@ -389,12 +403,14 @@ class TwoFactorService {
   static Future<String?> sendSmsOtp(String userId) async {
     try {
       // Check rate limit
-      final rateLimitError = await checkOtpRateLimit(userId, TwoFactorMethod.sms);
+      final rateLimitError =
+          await checkOtpRateLimit(userId, TwoFactorMethod.sms);
       if (rateLimitError != null) {
         return null; // Return null to signal rate limit (caller should handle)
       }
 
-      final phoneNumber = await _secureStorage.read(key: '$_smsPhoneKeyPrefix$userId');
+      final phoneNumber =
+          await _secureStorage.read(key: '$_smsPhoneKeyPrefix$userId');
       if (phoneNumber == null) {
         return null; // Phone not registered
       }
@@ -437,7 +453,8 @@ class TwoFactorService {
   /// Verify SMS OTP code during login
   static Future<bool> verifySmsOtp(String userId, String code) async {
     try {
-      final verificationId = await _secureStorage.read(key: '$_smsVerificationIdKeyPrefix$userId');
+      final verificationId =
+          await _secureStorage.read(key: '$_smsVerificationIdKeyPrefix$userId');
       if (verificationId == null) {
         return false;
       }
@@ -538,7 +555,9 @@ class TwoFactorService {
           ...config.enrolledMethods,
           TwoFactorMethod.passkey,
         ]..toSet().toList(),
-        primaryMethod: config.enrolledMethods.isEmpty ? TwoFactorMethod.passkey : config.primaryMethod,
+        primaryMethod: config.enrolledMethods.isEmpty
+            ? TwoFactorMethod.passkey
+            : config.primaryMethod,
         passkeyCredentialEncrypted: 'verified',
         isEnabled: config.enrolledMethods.isEmpty, // Enable if first method
       );
@@ -554,7 +573,8 @@ class TwoFactorService {
   /// Verify passkey using biometric authentication
   static Future<bool> verifyPasskey(String userId) async {
     try {
-      final isEnrolled = await _secureStorage.read(key: '$_passkeyKeyPrefix$userId');
+      final isEnrolled =
+          await _secureStorage.read(key: '$_passkeyKeyPrefix$userId');
       if (isEnrolled == null) {
         return false; // Passkey not enrolled
       }
@@ -562,11 +582,10 @@ class TwoFactorService {
       // Attempt biometric verification
       try {
         final isAuthenticated = await _localAuth.authenticate(
-          localizedReason: 'Authenticate with your biometric to verify identity',
-          options: const AuthenticationOptions(
-            stickyAuth: true,
-            biometricOnly: true,
-          ),
+          localizedReason:
+              'Authenticate with your biometric to verify identity',
+          biometricOnly: true,
+          persistAcrossBackgrounding: true,
         );
         return isAuthenticated;
       } on Exception catch (e) {
@@ -693,7 +712,8 @@ class TwoFactorService {
       // Check if still within rate limit window
       if (now - firstAttemptTime < (otpRateLimitWindowSeconds * 1000)) {
         if (attempts >= maxOtpAttemptsPerHour) {
-          final remainingSeconds = otpRateLimitWindowSeconds - ((now - firstAttemptTime) ~/ 1000);
+          final remainingSeconds =
+              otpRateLimitWindowSeconds - ((now - firstAttemptTime) ~/ 1000);
           final remainingMinutes = (remainingSeconds / 60).ceil();
           return 'Too many OTP requests. Try again in $remainingMinutes minute(s).';
         }
@@ -774,6 +794,14 @@ class TwoFactorService {
     );
   }
 
+  static String _generateRandomCode(int length) {
+    const chars =
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    final random = Random.secure();
+    return List.generate(length, (_) => chars[random.nextInt(chars.length)])
+        .join();
+  }
+
   static bool _isValidPhoneNumber(String phone) {
     // Basic validation: at least 10 digits
     final digits = phone.replaceAll(RegExp(r'[^\d]'), '');
@@ -789,7 +817,8 @@ class TwoFactorService {
       // For now, we'll store a temporary recovery token
       final recoveryToken = _generateRandomCode(32);
       print('Account recovery initiated for $email');
-      print('Recovery token: $recoveryToken (store in SharedPreferences temporarily)');
+      print(
+          'Recovery token: $recoveryToken (store in SharedPreferences temporarily)');
 
       // In a production app, you would:
       // 1. Send an email to the user with a recovery link
@@ -840,7 +869,8 @@ class TwoFactorService {
   }
 
   /// Allow disabling all methods if user has backup email verified
-  static Future<String?> disableAllMethodsWithEmailVerification(String userId, String email) async {
+  static Future<String?> disableAllMethodsWithEmailVerification(
+      String userId, String email) async {
     try {
       // In production, send verification email first
       // For now, just disable after logging the action
@@ -856,10 +886,12 @@ class TwoFactorService {
   // ── Device Trust (30-day window) ─────────────────────────────────────────────
 
   /// Mark this device as trusted for 30 days (skip 2FA)
-  static Future<String?> trustDeviceFor30Days(String userId, String deviceId) async {
+  static Future<String?> trustDeviceFor30Days(
+      String userId, String deviceId) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final trustedUntil = DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch;
+      final trustedUntil =
+          DateTime.now().add(const Duration(days: 30)).millisecondsSinceEpoch;
       final trustKey = '$_deviceTrustKeyPrefix$userId';
 
       // Store device trust info: device ID and expiration timestamp
@@ -870,7 +902,8 @@ class TwoFactorService {
       };
 
       await prefs.setString(trustKey, jsonEncode(trustData));
-      print('Device $deviceId trusted for user $userId until ${DateTime.fromMillisecondsSinceEpoch(trustedUntil)}');
+      print(
+          'Device $deviceId trusted for user $userId until ${DateTime.fromMillisecondsSinceEpoch(trustedUntil)}');
       return null;
     } catch (e) {
       print('Error trusting device: $e');
@@ -895,7 +928,8 @@ class TwoFactorService {
         return false;
       }
 
-      final isStillTrusted = DateTime.now().millisecondsSinceEpoch < trustedUntil;
+      final isStillTrusted =
+          DateTime.now().millisecondsSinceEpoch < trustedUntil;
       if (!isStillTrusted) {
         await removeTrustedDevice(userId);
       }
@@ -947,5 +981,20 @@ class TwoFactorService {
       print('Error removing device trust: $e');
       return 'Failed to remove device trust.';
     }
+  }
+
+  /// Returns a stable device ID persisted on the device.
+  static Future<String> getOrCreateDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_deviceIdKey);
+    if (existing != null && existing.isNotEmpty) {
+      return existing;
+    }
+
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    final id = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    await prefs.setString(_deviceIdKey, id);
+    return id;
   }
 }

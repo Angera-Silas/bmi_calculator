@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:share_plus/share_plus.dart';
 import '../constants.dart';
 import '../generated/l10n/app_localizations.dart';
 import '../main.dart';
-import '../models/bmi_record.dart';
+import '../providers/auth_provider.dart';
+import '../providers/bmi_records_provider.dart';
+import '../providers/session_provider.dart';
 import '../services/auth_service.dart';
 import '../services/locale_service.dart';
-import '../services/session_service.dart';
 import '../database/app_database.dart';
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  ConsumerState<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends ConsumerState<ProfilePage> {
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
   bool _isEditing = false;
@@ -26,8 +29,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
   int _totalChecks = 0;
   double? _avgBMI;
+  Set<String> _linkedProviders = {};
 
-  bool get _isGuest => SessionService.isGuest;
+  static const _socialProviders = [
+    (key: 'google', providerId: 'google.com', label: 'Google'),
+    (key: 'microsoft', providerId: 'microsoft.com', label: 'Microsoft'),
+    (key: 'facebook', providerId: 'facebook.com', label: 'Facebook'),
+    (key: 'twitter', providerId: 'twitter.com', label: 'Twitter'),
+    (key: 'apple', providerId: 'apple.com', label: 'Apple'),
+    (key: 'github', providerId: 'github.com', label: 'GitHub'),
+    (key: 'instagram', providerId: 'instagram.com', label: 'Instagram'),
+    (key: 'tiktok', providerId: 'tiktok.com', label: 'TikTok'),
+  ];
 
   @override
   void initState() {
@@ -44,23 +57,16 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    final userId = SessionService.userId;
+    final userId = ref.read(sessionProvider).userId;
     if (userId == null) return;
 
     final userData = await AppDatabase.getUser(userId);
-    final List<BmiRecord> history = await AppDatabase.fetchRecords(userId);
-
-    double? avg;
-    if (history.isNotEmpty) {
-      avg = history.map((r) => r.bmiValue).reduce((a, b) => a + b) /
-          history.length;
-    }
 
     if (!mounted) return;
+    final linked = AuthService.linkedProviderIds.toSet();
     setState(() {
       _userData = userData;
-      _totalChecks = history.length;
-      _avgBMI = avg;
+      _linkedProviders = linked;
       _isLoading = false;
       _nameController.text = userData?['name'] ?? '';
       _phoneController.text = userData?['phone'] ?? '';
@@ -68,7 +74,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _saveProfile() async {
-    final userId = SessionService.userId;
+    final userId = ref.read(sessionProvider).userId;
     if (userId == null) return;
 
     setState(() => _isSaving = true);
@@ -99,7 +105,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _signOut() async {
     final l10n = AppLocalizations.of(context);
-    final isGuest = _isGuest;
+    final isGuest = ref.read(sessionProvider).isGuest;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -118,8 +124,7 @@ class _ProfilePageState extends State<ProfilePage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(l10n.cancel,
-                style:
-                    TextStyle(color: DynamicColors.textSecondary(context))),
+                style: TextStyle(color: DynamicColors.textSecondary(context))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -135,10 +140,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     if (confirmed == true) {
       if (isGuest) {
-        final userId = SessionService.userId;
+        final userId = ref.read(sessionProvider).userId;
         if (userId != null) await AppDatabase.deleteAllUserData(userId);
       }
-      await AuthService.logout();
+      await ref.read(authProvider.notifier).logout();
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/login');
     }
@@ -162,8 +167,7 @@ class _ProfilePageState extends State<ProfilePage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(l10n.cancel,
-                style:
-                    TextStyle(color: DynamicColors.textSecondary(context))),
+                style: TextStyle(color: DynamicColors.textSecondary(context))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -176,7 +180,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     if (confirmed == true) {
-      final error = await AuthService.deleteAccount();
+      final error = await ref.read(authProvider.notifier).deleteAccount();
       if (!mounted) return;
       if (error != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -225,7 +229,8 @@ class _ProfilePageState extends State<ProfilePage> {
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
-                  children: LocaleService.supportedLanguages.entries.map((entry) {
+                  children:
+                      LocaleService.supportedLanguages.entries.map((entry) {
                     return ListTile(
                       title: Text(
                         entry.value,
@@ -256,9 +261,83 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _refreshLinkedProviders() async {
+    await AuthService.currentUser?.reload();
+    final linked = AuthService.linkedProviderIds.toSet();
+    if (!mounted) return;
+    setState(() => _linkedProviders = linked);
+  }
+
+  Future<void> _toggleSocialProvider({
+    required String key,
+    required String providerId,
+    required bool isLinked,
+  }) async {
+    if (ref.read(sessionProvider).isGuest) return;
+
+    final result = isLinked
+        ? await AuthService.unlinkProvider(providerId)
+        : await AuthService.linkSocialProvider(key);
+
+    if (!mounted) return;
+
+    if (result == null) {
+      await _refreshLinkedProviders();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isLinked ? 'Account unlinked' : 'Account linked'),
+          backgroundColor: kSuccessColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result),
+          backgroundColor: kErrorColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  void _shareApp() {
+    const appLink =
+        'https://play.google.com/store/apps/details?id=com.angerasilas.bmi_calculator';
+    final text = 'Track your health with BMI Calculator.\n$appLink';
+    SharePlus.instance.share(
+      ShareParams(
+        text: text,
+      ),
+    );
+  }
+
+  void _invitePeers() {
+    const appLink =
+        'https://play.google.com/store/apps/details?id=com.angerasilas.bmi_calculator';
+    final text =
+        'Join me on BMI Calculator to track your BMI and health trends.\n$appLink';
+    SharePlus.instance.share(
+      ShareParams(
+        text: text,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final session = ref.watch(sessionProvider);
+    final isGuest = session.isGuest;
+    final records = ref.watch(bmiRecordsProvider).value ?? const [];
+    _totalChecks = records.length;
+    if (records.isNotEmpty) {
+      _avgBMI =
+          records.fold<double>(0, (a, r) => a + r.bmiValue) / records.length;
+    }
+    final userEmail =
+        isGuest ? null : (session.userEmail ?? _userData?['email']);
+
     return Scaffold(
       backgroundColor: DynamicColors.bg(context),
       appBar: AppBar(
@@ -274,7 +353,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         actions: [
-          if (!_isLoading && !_isEditing && !_isGuest)
+          if (!_isLoading && !_isEditing && !isGuest)
             IconButton(
               icon: Icon(Icons.edit_outlined,
                   color: DynamicColors.textSecondary(context)),
@@ -305,7 +384,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 padding: const EdgeInsets.all(kSpaceMD),
                 children: [
                   // ── Guest banner ──────────────────────────────────────────
-                  if (_isGuest) ...[
+                  if (isGuest) ...[
                     Container(
                       padding: const EdgeInsets.all(kSpaceMD),
                       decoration: BoxDecoration(
@@ -343,8 +422,11 @@ class _ProfilePageState extends State<ProfilePage> {
                           height: 88,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: _isGuest
-                                  ? [const Color(0xFF607D8B), const Color(0xFF90A4AE)]
+                              colors: isGuest
+                                  ? [
+                                      const Color(0xFF607D8B),
+                                      const Color(0xFF90A4AE)
+                                    ]
                                   : [kAccent, kAccentLight],
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -364,7 +446,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         const SizedBox(height: kSpaceSM),
                         Text(
-                          _isGuest
+                          isGuest
                               ? l10n.guestUser
                               : (_userData?['name'] ?? 'User'),
                           style: TextStyle(
@@ -374,9 +456,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           ),
                         ),
                         Text(
-                          _isGuest
-                              ? l10n.guestModeLocal
-                              : (_userData?['email'] ?? ''),
+                          isGuest ? l10n.guestModeLocal : (userEmail ?? ''),
                           style: TextStyle(
                             fontSize: 13,
                             color: DynamicColors.textSecondary(context),
@@ -411,8 +491,9 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
 
                   // ── Personal Info (authenticated only) ──────────────────────
-                  if (!_isGuest) ...[
-                    _SectionHeader(context: context, title: l10n.personalInformation),
+                  if (!isGuest) ...[
+                    _SectionHeader(
+                        context: context, title: l10n.personalInformation),
                     const SizedBox(height: kSpaceSM),
                     _InfoCard(
                       child: Column(
@@ -426,7 +507,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               : _InfoRow(
                                   icon: Icons.person_outline,
                                   label: l10n.fullName,
-                                  value: _userData?['name'] ?? l10n.notAvailable,
+                                  value:
+                                      _userData?['name'] ?? l10n.notAvailable,
                                 ),
                           Divider(
                               color: DynamicColors.border(context), height: 1),
@@ -447,13 +529,26 @@ class _ProfilePageState extends State<ProfilePage> {
                               : _InfoRow(
                                   icon: Icons.phone_outlined,
                                   label: l10n.phone,
-                                  value: _userData?['phone'] ?? l10n.notAvailable,
+                                  value:
+                                      _userData?['phone'] ?? l10n.notAvailable,
                                 ),
                         ],
                       ),
                     ),
                     const SizedBox(height: kSpaceLG),
                   ],
+
+                  // ── Health Data ─────────────────────────────────────────────
+                  _SectionHeader(context: context, title: 'Health Data'),
+                  const SizedBox(height: kSpaceSM),
+                  _InfoCard(
+                    child: _ActionRow(
+                      icon: Icons.monitor_heart_outlined,
+                      label: 'Health Data',
+                      onTap: () => Navigator.pushNamed(context, '/wearable'),
+                    ),
+                  ),
+                  const SizedBox(height: kSpaceLG),
 
                   // ── Account Actions ─────────────────────────────────────────
                   _SectionHeader(context: context, title: l10n.account),
@@ -462,20 +557,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   _InfoCard(
                     child: Column(
                       children: [
-                        if (_isGuest) ...[
+                        if (isGuest) ...[
                           _ActionRow(
                             icon: Icons.person_add_outlined,
                             label: l10n.createAccount,
-                            onTap: () =>
-                                Navigator.pushReplacementNamed(context, '/register'),
+                            onTap: () => Navigator.pushReplacementNamed(
+                                context, '/register'),
                           ),
                           Divider(
                               color: DynamicColors.border(context), height: 1),
                           _ActionRow(
                             icon: Icons.login,
                             label: l10n.signIn,
-                            onTap: () =>
-                                Navigator.pushReplacementNamed(context, '/login'),
+                            onTap: () => Navigator.pushReplacementNamed(
+                                context, '/login'),
                           ),
                         ] else ...[
                           _ActionRow(
@@ -490,9 +585,18 @@ class _ProfilePageState extends State<ProfilePage> {
                           Divider(
                               color: DynamicColors.border(context), height: 1),
                           _ActionRow(
+                            icon: Icons.alarm,
+                            label: l10n.reminderSettingsTitle,
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/reminders'),
+                          ),
+                          Divider(
+                              color: DynamicColors.border(context), height: 1),
+                          _ActionRow(
                             icon: Icons.shield_outlined,
                             label: 'Security Settings',
-                            onTap: () => Navigator.pushNamed(context, '/security'),
+                            onTap: () =>
+                                Navigator.pushNamed(context, '/security'),
                           ),
                           Divider(
                               color: DynamicColors.border(context), height: 1),
@@ -507,9 +611,85 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                         _ActionRow(
                           icon: Icons.logout,
-                          label: _isGuest ? l10n.leaveGuestMode : l10n.signOut,
+                          label: isGuest ? l10n.leaveGuestMode : l10n.signOut,
                           color: kErrorColor,
                           onTap: _signOut,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: kSpaceLG),
+
+                  if (!isGuest) ...[
+                    _SectionHeader(context: context, title: 'Social Accounts'),
+                    const SizedBox(height: kSpaceSM),
+                    _InfoCard(
+                      child: Column(
+                        children: _socialProviders.map((provider) {
+                          final isLinked =
+                              _linkedProviders.contains(provider.providerId);
+                          final isUnsupported = provider.key == 'instagram' ||
+                              provider.key == 'tiktok';
+                          return Column(
+                            children: [
+                              ListTile(
+                                leading: Icon(
+                                  Icons.link,
+                                  color: DynamicColors.iconColor(context),
+                                ),
+                                title: Text(
+                                  provider.label,
+                                  style: TextStyle(
+                                    color: DynamicColors.textPrimary(context),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                subtitle: isUnsupported
+                                    ? const Text(
+                                        'Custom OAuth backend required')
+                                    : null,
+                                trailing: TextButton(
+                                  onPressed: isUnsupported
+                                      ? null
+                                      : () => _toggleSocialProvider(
+                                            key: provider.key,
+                                            providerId: provider.providerId,
+                                            isLinked: isLinked,
+                                          ),
+                                  child: Text(isLinked ? 'Unlink' : 'Link'),
+                                ),
+                              ),
+                              if (provider != _socialProviders.last)
+                                Divider(
+                                  color: DynamicColors.border(context),
+                                  height: 1,
+                                ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                    const SizedBox(height: kSpaceLG),
+                  ],
+
+                  _SectionHeader(context: context, title: 'Sharing'),
+                  const SizedBox(height: kSpaceSM),
+                  _InfoCard(
+                    child: Column(
+                      children: [
+                        _ActionRow(
+                          icon: Icons.share_outlined,
+                          label: 'Share App',
+                          onTap: _shareApp,
+                        ),
+                        Divider(
+                          color: DynamicColors.border(context),
+                          height: 1,
+                        ),
+                        _ActionRow(
+                          icon: Icons.group_add_outlined,
+                          label: 'Invite Friends',
+                          onTap: _invitePeers,
                         ),
                       ],
                     ),
@@ -534,7 +714,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   String _getInitials() {
-    if (_isGuest) return 'G';
+    if (ref.read(sessionProvider).isGuest) return 'G';
     final name = _userData?['name'] as String? ?? '';
     if (name.isEmpty) return '?';
     final parts = name.trim().split(' ');
@@ -579,11 +759,14 @@ class _StatCard extends StatelessWidget {
                   Text(
                     value,
                     style: TextStyle(
-                        fontSize: 22, fontWeight: FontWeight.w900, color: color),
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: color),
                   ),
                   Text(
                     label,
-                    style: TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
+                    style:
+                        TextStyle(fontSize: 11, color: color.withOpacity(0.8)),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
@@ -616,7 +799,8 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _InfoRow(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -714,8 +898,7 @@ class _ActionRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(kRadiusMD),
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: 16),
         child: Row(
           children: [
             Icon(icon, color: textColor, size: 18),

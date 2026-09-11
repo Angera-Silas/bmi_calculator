@@ -4,23 +4,29 @@
 /// [remoteId] is the Firestore document ID — null until first successful sync.
 /// [isDeleted] enables soft-delete so offline deletions can be pushed on reconnect.
 class BmiRecord {
-  final String id;            // UUID — local primary key
-  final String userId;        // Firebase UID or SessionService.guestId
-  final int height;           // cm
-  final int weight;           // kg
+  final String id; // UUID — local primary key
+  final String userId; // Firebase UID or SessionService.guestId
+  final int height; // cm
+  final int weight; // kg
   final int age;
   final bool isMale;
   final double bmiValue;
-  final String bmiResult;     // "23.4"
-  final String resultText;    // WHO category label
+  final String bmiResult; // "23.4"
+  final String resultText; // WHO category label
   final String interpretation;
   final DateTime timestamp;
   final bool isSynced;
-  final bool isDeleted;       // soft-delete flag for offline deletes
-  final String? remoteId;     // Firestore doc ID — set after first push
-  final List<String> healthConditions;  // Stored as comma-separated or JSON
-  final String pregnancyStatus;  // For female users
-  final double? prePregnancyWeight;  // kg, only for pregnant users
+  final bool isDeleted; // soft-delete flag for offline deletes
+  final String? remoteId; // Firestore doc ID — set after first push
+  final List<String> healthConditions; // Stored as comma-separated or JSON
+  final String pregnancyStatus; // For female users
+  final double? prePregnancyWeight; // kg, only for pregnant users
+
+  // ── Advanced body measurements (Phase 1) ──────────────────────────────────
+  final double? waistCm;
+  final double? neckCm;
+  final double? hipCm; // female only
+  final int? restingHeartRate; // bpm
 
   const BmiRecord({
     required this.id,
@@ -40,6 +46,10 @@ class BmiRecord {
     this.healthConditions = const [],
     this.pregnancyStatus = 'notApplicable',
     this.prePregnancyWeight,
+    this.waistCm,
+    this.neckCm,
+    this.hipCm,
+    this.restingHeartRate,
   });
 
   BmiRecord copyWith({
@@ -60,6 +70,10 @@ class BmiRecord {
     List<String>? healthConditions,
     String? pregnancyStatus,
     double? prePregnancyWeight,
+    double? waistCm,
+    double? neckCm,
+    double? hipCm,
+    int? restingHeartRate,
   }) {
     return BmiRecord(
       id: id ?? this.id,
@@ -79,6 +93,10 @@ class BmiRecord {
       healthConditions: healthConditions ?? this.healthConditions,
       pregnancyStatus: pregnancyStatus ?? this.pregnancyStatus,
       prePregnancyWeight: prePregnancyWeight ?? this.prePregnancyWeight,
+      waistCm: waistCm ?? this.waistCm,
+      neckCm: neckCm ?? this.neckCm,
+      hipCm: hipCm ?? this.hipCm,
+      restingHeartRate: restingHeartRate ?? this.restingHeartRate,
     );
   }
 
@@ -100,6 +118,10 @@ class BmiRecord {
         'health_conditions': healthConditions.join(','),
         'pregnancy_status': pregnancyStatus,
         'pre_pregnancy_weight': prePregnancyWeight,
+        'waist_cm': waistCm,
+        'neck_cm': neckCm,
+        'hip_cm': hipCm,
+        'resting_hr': restingHeartRate,
       };
 
   factory BmiRecord.fromMap(Map<String, dynamic> map) => BmiRecord(
@@ -113,13 +135,22 @@ class BmiRecord {
         bmiResult: map['bmi_result'] as String,
         resultText: map['result_text'] as String,
         interpretation: map['interpretation'] as String,
-        timestamp: DateTime.fromMillisecondsSinceEpoch(map['recorded_at'] as int),
+        timestamp:
+            DateTime.fromMillisecondsSinceEpoch(map['recorded_at'] as int),
         isSynced: (map['is_synced'] as int) == 1,
         isDeleted: (map['is_deleted'] as int? ?? 0) == 1,
         remoteId: map['remote_id'] as String?,
-        healthConditions: (map['health_conditions'] as String?)?.split(',').where((s) => s.isNotEmpty).toList() ?? [],
+        healthConditions: (map['health_conditions'] as String?)
+                ?.split(',')
+                .where((s) => s.isNotEmpty)
+                .toList() ??
+            [],
         pregnancyStatus: map['pregnancy_status'] as String? ?? 'notApplicable',
         prePregnancyWeight: (map['pre_pregnancy_weight'] as num?)?.toDouble(),
+        waistCm: (map['waist_cm'] as num?)?.toDouble(),
+        neckCm: (map['neck_cm'] as num?)?.toDouble(),
+        hipCm: (map['hip_cm'] as num?)?.toDouble(),
+        restingHeartRate: map['resting_hr'] as int?,
       );
 
   /// Converts to a Firestore-friendly map (no local-only fields).
@@ -137,5 +168,9 @@ class BmiRecord {
         'healthConditions': healthConditions,
         'pregnancyStatus': pregnancyStatus,
         'prePregnancyWeight': prePregnancyWeight,
+        'waistCm': waistCm,
+        'neckCm': neckCm,
+        'hipCm': hipCm,
+        'restingHeartRate': restingHeartRate,
       };
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:uuid/uuid.dart';
 import '../calculator_brain.dart';
@@ -8,66 +9,42 @@ import '../models/bmi_record.dart';
 import '../models/user_profile.dart';
 import '../models/health_condition.dart';
 import '../models/pregnancy_status.dart';
-import '../database/app_database.dart';
-import '../services/session_service.dart';
-import '../services/sync_service.dart';
-import '../services/connectivity_service.dart';
+import '../providers/input_form_provider.dart';
+import '../providers/bmi_records_provider.dart';
+import '../providers/session_provider.dart';
+import '../providers/wearable_provider.dart';
+import '../widgets/daily_challenge_card.dart';
+import 'blood_pressure_input.dart';
+import 'blood_sugar_input.dart';
 import 'results_page.dart';
 
-enum Gender { male, female }
-
-class InputHome extends StatefulWidget {
+class InputHome extends ConsumerWidget {
   const InputHome({super.key});
 
-  @override
-  State<InputHome> createState() => _InputHomeState();
-}
+  Future<void> _calculate(BuildContext context, WidgetRef ref) async {
+    final l10n = AppLocalizations.of(context);
+    final form = ref.read(inputFormProvider);
 
-class _InputHomeState extends State<InputHome> {
-  Gender? _selectedGender;
-  bool _isMetric = true; // true=cm/kg, false=ft/lbs
-
-  // Metric values
-  int _heightCm = 170;
-  int _weightKg = 70;
-  int _age = 25;
-  
-  // New health fields
-  final List<HealthCondition> _selectedConditions = [];
-  PregnancyStatus _pregnancyStatus = PregnancyStatus.notApplicable;
-  double? _prePregnancyWeight;
-
-  bool _isSaving = false;
-
-  // Imperial helpers
-  double get _heightFt => _heightCm / 30.48;
-  double get _weightLbs => _weightKg * 2.20462;
-
-  // Live BMI preview
-  String get _liveBMI {
-    if (_heightCm <= 0 || _weightKg <= 0) return '--';
-    try {
-      final calc = CalculatorBrain(height: _heightCm, weight: _weightKg, age: _age);
-      return calc.calculateBMI();
-    } catch (_) {
-      return '--';
-    }
-  }
-
-  Color get _liveBMIColor {
-    final v = double.tryParse(_liveBMI);
-    if (v == null) return DynamicColors.textSecondary(context);
-    return getBMIColor(v);
-  }
-
-  Future<void> _calculate() async {
-    if (_selectedGender == null) {
+    if (form.gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).selectGenderError),
+          content: Text(l10n.selectGenderError),
           backgroundColor: kWarningColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(kRadiusSM)),
+        ),
+      );
+      return;
+    }
+
+    final session = ref.read(sessionProvider);
+    if (!session.hasSession) {
+      // Should not happen - splash screen handles this, but safety check
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(l10n.signInToSave),
+          backgroundColor: kErrorColor,
         ),
       );
       return;
@@ -75,65 +52,64 @@ class _InputHomeState extends State<InputHome> {
 
     // Build UserProfile with health context
     final userProfile = UserProfile(
-      age: _age,
-      isMale: _selectedGender == Gender.male,
-      healthConditions: _selectedConditions,
-      pregnancyStatus: _pregnancyStatus,
-      prePregnancyWeight: _prePregnancyWeight,
+      age: form.age,
+      isMale: form.gender == Gender.male,
+      healthConditions: form.selectedConditions,
+      pregnancyStatus: form.pregnancyStatus,
+      prePregnancyWeight: form.prePregnancyWeight,
     );
 
-    final calc = CalculatorBrain.withProfile(
-      height: _heightCm,
-      weight: _weightKg,
-      userProfile: userProfile,
-    );
-
-    final userId = SessionService.userId;
-    if (userId == null) {
-      // Should not happen - splash screen handles this, but safety check
+    final CalculatorBrain calc;
+    try {
+      calc = CalculatorBrain.withProfile(
+        height: form.heightCm,
+        weight: form.weightKg,
+        userProfile: userProfile,
+        waistCircumferenceCm: form.waistCm,
+        neckCircumferenceCm: form.neckCm,
+        hipCircumferenceCm: form.hipCm,
+        restingHeartRateBpm: form.restingHeartRate,
+      );
+    } on ArgumentError {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).signInToSave),
+          content: Text(l10n.invalidMetricInput),
           backgroundColor: kErrorColor,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    setState(() => _isSaving = true);
+    ref.read(inputFormProvider.notifier).setSaving(true);
 
     // Create local record with new health fields
     final record = BmiRecord(
       id: const Uuid().v4(),
-      userId: userId,
-      height: _heightCm,
-      weight: _weightKg,
-      age: _age,
-      isMale: _selectedGender == Gender.male,
+      userId: session.userId!,
+      height: form.heightCm,
+      weight: form.weightKg,
+      age: form.age,
+      isMale: form.gender == Gender.male,
       bmiValue: calc.bmiValue,
       bmiResult: calc.calculateBMI(),
       resultText: calc.getResult(),
       interpretation: calc.getInterpretation(),
       timestamp: DateTime.now(),
       isSynced: false,
-      healthConditions: _selectedConditions.map((c) => c.name).toList(),
-      pregnancyStatus: _pregnancyStatus.name,
-      prePregnancyWeight: _prePregnancyWeight,
+      healthConditions: form.selectedConditions.map((c) => c.name).toList(),
+      pregnancyStatus: form.pregnancyStatus.name,
+      prePregnancyWeight: form.prePregnancyWeight,
+      waistCm: form.waistCm,
+      neckCm: form.neckCm,
+      hipCm: form.hipCm,
+      restingHeartRate: form.restingHeartRate,
     );
 
-    await AppDatabase.insertRecord(record);
+    await ref.read(bmiRecordsProvider.notifier).addRecord(record);
+    ref.read(inputFormProvider.notifier).setSaving(false);
 
-    if (!mounted) return;
-    setState(() => _isSaving = false);
-
-    // Attempt background sync if online (fire-and-forget before context use)
-    if (userId != SessionService.guestId) {
-      ConnectivityService.isOnline.then((online) {
-        if (online) SyncService.sync(userId);
-      });
-    }
-
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     Navigator.push(
       context,
@@ -149,7 +125,10 @@ class _InputHomeState extends State<InputHome> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final form = ref.watch(inputFormProvider);
+    final l10n = AppLocalizations.of(context);
+
     return Stack(
       children: [
         SingleChildScrollView(
@@ -158,43 +137,69 @@ class _InputHomeState extends State<InputHome> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // ── Live BMI Preview Bar ──────────────────────────────────────
-              _buildLiveBMIBar(),
+              _buildLiveBMIBar(context, form),
 
+              const SizedBox(height: kSpaceMD),
+
+              // ── Today's Daily Challenge (Sprint 2.2) ─────────────────────
+              const DailyChallengeCard(),
+              const SizedBox(height: kSpaceMD),
+
+              // ── Wearable Auto-fill Banner (Sprint 3.1) ──────────────────
+              const _WearableAutoFillBanner(),
               const SizedBox(height: kSpaceMD),
 
               // ── Unit Toggle ───────────────────────────────────────────────
               _UnitToggle(
-                isMetric: _isMetric,
-                onToggle: (v) => setState(() => _isMetric = v),
-                metricLabel: AppLocalizations.of(context).metricUnits,
-                imperialLabel: AppLocalizations.of(context).imperialUnits,
+                isMetric: form.isMetric,
+                onToggle: (v) =>
+                    ref.read(inputFormProvider.notifier).setIsMetric(v),
+                metricLabel: l10n.metricUnits,
+                imperialLabel: l10n.imperialUnits,
+              ),
+              const SizedBox(height: kSpaceMD),
+
+              // ── Health Tracking ─────────────────────────────────────────
+              _HealthTrackingCard(
+                onBpTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BloodPressureInput()),
+                ),
+                onGlucoseTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const BloodSugarInput()),
+                ),
               ),
               const SizedBox(height: kSpaceMD),
 
               // ── Gender ────────────────────────────────────────────────────
-              _SectionLabel(label: AppLocalizations.of(context).biologicalSex),
+              _SectionLabel(label: l10n.biologicalSex),
               const SizedBox(height: kSpaceSM),
               Row(
                 children: [
                   _GenderCard(
-                    label: AppLocalizations.of(context).male,
+                    label: l10n.male,
                     icon: FontAwesomeIcons.mars,
-                    selected: _selectedGender == Gender.male,
-                    onTap: () => setState(() => _selectedGender = Gender.male),
+                    selected: form.gender == Gender.male,
+                    onTap: () => ref
+                        .read(inputFormProvider.notifier)
+                        .setGender(Gender.male),
                   ),
                   const SizedBox(width: kSpaceSM),
                   _GenderCard(
-                    label: AppLocalizations.of(context).female,
+                    label: l10n.female,
                     icon: FontAwesomeIcons.venus,
-                    selected: _selectedGender == Gender.female,
-                    onTap: () => setState(() => _selectedGender = Gender.female),
+                    selected: form.gender == Gender.female,
+                    onTap: () => ref
+                        .read(inputFormProvider.notifier)
+                        .setGender(Gender.female),
                   ),
                 ],
               ),
               const SizedBox(height: kSpaceMD),
 
               // ── Height ────────────────────────────────────────────────────
-              _SectionLabel(label: AppLocalizations.of(context).height),
+              _SectionLabel(label: l10n.height),
               const SizedBox(height: kSpaceSM),
               _MetricCard(
                 child: Column(
@@ -205,20 +210,28 @@ class _InputHomeState extends State<InputHome> {
                       textBaseline: TextBaseline.alphabetic,
                       children: [
                         Text(
-                          _isMetric ? '$_heightCm' : _heightFt.toStringAsFixed(1),
-                          style: kNumberTextStyle.copyWith(color: DynamicColors.textPrimary(context)),
+                          form.isMetric
+                              ? '${form.heightCm}'
+                              : (form.heightCm / 30.48).toStringAsFixed(1),
+                          style: kNumberTextStyle.copyWith(
+                              color: DynamicColors.textPrimary(context)),
                         ),
                         const SizedBox(width: 4),
                         Text(
-                          _isMetric ? 'cm' : 'ft',
-                          style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 18, fontWeight: FontWeight.w600),
+                          form.isMetric ? 'cm' : 'ft',
+                          style: TextStyle(
+                              color: DynamicColors.textSecondary(context),
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 12.0),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 22.0),
+                        thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 12.0),
+                        overlayShape:
+                            const RoundSliderOverlayShape(overlayRadius: 22.0),
                         thumbColor: kAccent,
                         activeTrackColor: kAccent,
                         inactiveTrackColor: DynamicColors.border(context),
@@ -226,17 +239,25 @@ class _InputHomeState extends State<InputHome> {
                         trackHeight: 4,
                       ),
                       child: Slider(
-                        value: _heightCm.toDouble(),
+                        value: form.heightCm.toDouble(),
                         min: 100.0,
                         max: 250.0,
-                        onChanged: (v) => setState(() => _heightCm = v.round()),
+                        onChanged: (v) => ref
+                            .read(inputFormProvider.notifier)
+                            .setHeight(v.round()),
                       ),
                     ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('100 cm', style: TextStyle(fontSize: 11, color: DynamicColors.textSecondary(context))),
-                        Text('250 cm', style: TextStyle(fontSize: 11, color: DynamicColors.textSecondary(context))),
+                        Text('100 cm',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: DynamicColors.textSecondary(context))),
+                        Text('250 cm',
+                            style: TextStyle(
+                                fontSize: 11,
+                                color: DynamicColors.textSecondary(context))),
                       ],
                     ),
                   ],
@@ -251,7 +272,7 @@ class _InputHomeState extends State<InputHome> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _SectionLabel(label: AppLocalizations.of(context).weight),
+                        _SectionLabel(label: l10n.weight),
                         const SizedBox(height: kSpaceSM),
                         _MetricCard(
                           child: Column(
@@ -262,7 +283,10 @@ class _InputHomeState extends State<InputHome> {
                                 textBaseline: TextBaseline.alphabetic,
                                 children: [
                                   Text(
-                                    _isMetric ? '$_weightKg' : _weightLbs.toStringAsFixed(0),
+                                    form.isMetric
+                                        ? '${form.weightKg}'
+                                        : (form.weightKg * 2.20462)
+                                            .toStringAsFixed(0),
                                     style: kNumberTextStyle.copyWith(
                                       fontSize: 40,
                                       color: DynamicColors.textPrimary(context),
@@ -270,9 +294,10 @@ class _InputHomeState extends State<InputHome> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    _isMetric ? 'kg' : 'lbs',
+                                    form.isMetric ? 'kg' : 'lbs',
                                     style: TextStyle(
-                                      color: DynamicColors.textSecondary(context),
+                                      color:
+                                          DynamicColors.textSecondary(context),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -281,12 +306,14 @@ class _InputHomeState extends State<InputHome> {
                               ),
                               const SizedBox(height: kSpaceSM),
                               _IncrementRow(
-                                onDecrement: () => setState(() {
-                                  if (_weightKg > 20) _weightKg--;
-                                }),
-                                onIncrement: () => setState(() {
-                                  if (_weightKg < 300) _weightKg++;
-                                }),
+                                onDecrement: () => ref
+                                    .read(inputFormProvider.notifier)
+                                    .setWeight(
+                                        (form.weightKg - 1).clamp(20, 300)),
+                                onIncrement: () => ref
+                                    .read(inputFormProvider.notifier)
+                                    .setWeight(
+                                        (form.weightKg + 1).clamp(20, 300)),
                               ),
                             ],
                           ),
@@ -299,7 +326,7 @@ class _InputHomeState extends State<InputHome> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        _SectionLabel(label: AppLocalizations.of(context).age),
+                        _SectionLabel(label: l10n.age),
                         const SizedBox(height: kSpaceSM),
                         _MetricCard(
                           child: Column(
@@ -310,7 +337,7 @@ class _InputHomeState extends State<InputHome> {
                                 textBaseline: TextBaseline.alphabetic,
                                 children: [
                                   Text(
-                                    '$_age',
+                                    '${form.age}',
                                     style: kNumberTextStyle.copyWith(
                                       fontSize: 40,
                                       color: DynamicColors.textPrimary(context),
@@ -318,9 +345,10 @@ class _InputHomeState extends State<InputHome> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    AppLocalizations.of(context).years,
+                                    l10n.years,
                                     style: TextStyle(
-                                      color: DynamicColors.textSecondary(context),
+                                      color:
+                                          DynamicColors.textSecondary(context),
                                       fontSize: 14,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -329,12 +357,12 @@ class _InputHomeState extends State<InputHome> {
                               ),
                               const SizedBox(height: kSpaceSM),
                               _IncrementRow(
-                                onDecrement: () => setState(() {
-                                  if (_age > 2) _age--;
-                                }),
-                                onIncrement: () => setState(() {
-                                  if (_age < 120) _age++;
-                                }),
+                                onDecrement: () => ref
+                                    .read(inputFormProvider.notifier)
+                                    .setAge((form.age - 1).clamp(2, 120)),
+                                onIncrement: () => ref
+                                    .read(inputFormProvider.notifier)
+                                    .setAge((form.age + 1).clamp(2, 120)),
                               ),
                             ],
                           ),
@@ -347,22 +375,27 @@ class _InputHomeState extends State<InputHome> {
               const SizedBox(height: kSpaceMD),
 
               // ── Health Conditions ────────────────────────────────────────────
-              _SectionLabel(label: AppLocalizations.of(context).healthConditions),
+              _SectionLabel(label: l10n.healthConditions),
               const SizedBox(height: kSpaceSM),
-              _buildHealthConditionsSection(),
+              _buildHealthConditionsSection(context, ref, form),
               const SizedBox(height: kSpaceMD),
 
               // ── Pregnancy Status (Female Only) ────────────────────────────
-              if (_selectedGender == Gender.female)
+              if (form.isFemale)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SectionLabel(label: AppLocalizations.of(context).pregnancyStatus),
+                    _SectionLabel(label: l10n.pregnancyStatus),
                     const SizedBox(height: kSpaceSM),
-                    _buildPregnancySection(),
+                    _buildPregnancySection(context, ref, form),
                     const SizedBox(height: kSpaceMD),
                   ],
                 ),
+
+              // ── Advanced Body Metrics (Phase 1) ───────────────────────────
+              _SectionLabel(label: l10n.advancedMetricsTitle),
+              const SizedBox(height: kSpaceSM),
+              _buildAdvancedMetricsSection(context, ref, form),
             ],
           ),
         ),
@@ -373,29 +406,34 @@ class _InputHomeState extends State<InputHome> {
           left: 0,
           right: 0,
           child: Container(
-            padding: const EdgeInsets.fromLTRB(kSpaceMD, kSpaceSM, kSpaceMD, kSpaceMD),
+            padding: const EdgeInsets.fromLTRB(
+                kSpaceMD, kSpaceSM, kSpaceMD, kSpaceMD),
             decoration: BoxDecoration(
               color: DynamicColors.bg(context),
-              border: Border(top: BorderSide(color: DynamicColors.border(context))),
+              border:
+                  Border(top: BorderSide(color: DynamicColors.border(context))),
             ),
             child: SizedBox(
               height: 52,
               child: ElevatedButton(
-                onPressed: _isSaving ? null : _calculate,
+                onPressed:
+                    form.isSaving ? null : () => _calculate(context, ref),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: kAccent,
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: kAccent.withOpacity(0.6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusMD)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(kRadiusMD)),
                   elevation: 0,
                 ),
-                child: _isSaving
+                child: form.isSaving
                     ? const SizedBox(
                         width: 20,
                         height: 20,
-                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                        child: CircularProgressIndicator(
+                            color: Colors.white, strokeWidth: 2),
                       )
-                    : Text(AppLocalizations.of(context).calculateBmi, style: kLargeButtonTextStyle),
+                    : Text(l10n.calculateBmi, style: kLargeButtonTextStyle),
               ),
             ),
           ),
@@ -404,11 +442,24 @@ class _InputHomeState extends State<InputHome> {
     );
   }
 
-  Widget _buildLiveBMIBar() {
-    final bmi = _liveBMI;
-    final color = _liveBMIColor;
+  Widget _buildLiveBMIBar(BuildContext context, InputFormState form) {
+    final String bmi;
+    if (form.heightCm <= 0 || form.weightKg <= 0) {
+      bmi = '--';
+    } else {
+      bmi = CalculatorBrain(
+        height: form.heightCm,
+        weight: form.weightKg,
+        age: form.age,
+      ).calculateBMI();
+    }
+    final v = double.tryParse(bmi);
+    final color =
+        v == null ? DynamicColors.textSecondary(context) : getBMIColor(v);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: kSpaceSM),
+      padding:
+          const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: kSpaceSM),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(kRadiusMD),
@@ -420,7 +471,8 @@ class _InputHomeState extends State<InputHome> {
           const SizedBox(width: kSpaceSM),
           Text(
             AppLocalizations.of(context).liveBmiPreview,
-            style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 13),
+            style: TextStyle(
+                color: DynamicColors.textSecondary(context), fontSize: 13),
           ),
           const Spacer(),
           Text(
@@ -433,8 +485,9 @@ class _InputHomeState extends State<InputHome> {
           ),
           const SizedBox(width: 6),
           Text(
-            bmi == '--' ? '' : _getShortCategory(context, double.tryParse(bmi) ?? 0),
-            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+            bmi == '--' ? '' : _getShortCategory(context, v ?? 0),
+            style: TextStyle(
+                color: color, fontSize: 12, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -449,25 +502,19 @@ class _InputHomeState extends State<InputHome> {
     return l10n.shortObese;
   }
 
-  Widget _buildHealthConditionsSection() {
+  Widget _buildHealthConditionsSection(
+      BuildContext context, WidgetRef ref, InputFormState form) {
     return _MetricCard(
       child: Wrap(
         spacing: kSpaceSM,
         runSpacing: kSpaceSM,
         children: HealthCondition.values.map((condition) {
-          final isSelected = _selectedConditions.contains(condition);
+          final isSelected = form.selectedConditions.contains(condition);
           return FilterChip(
             label: Text(condition.shortLabel),
             selected: isSelected,
-            onSelected: (selected) {
-              setState(() {
-                if (selected) {
-                  _selectedConditions.add(condition);
-                } else {
-                  _selectedConditions.remove(condition);
-                }
-              });
-            },
+            onSelected: (_) =>
+                ref.read(inputFormProvider.notifier).toggleCondition(condition),
             backgroundColor: DynamicColors.card(context),
             selectedColor: kAccent.withOpacity(0.2),
             labelStyle: TextStyle(
@@ -480,13 +527,15 @@ class _InputHomeState extends State<InputHome> {
     );
   }
 
-  Widget _buildPregnancySection() {
+  Widget _buildPregnancySection(
+      BuildContext context, WidgetRef ref, InputFormState form) {
+    final l10n = AppLocalizations.of(context);
     return _MetricCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButton<PregnancyStatus>(
-            value: _pregnancyStatus,
+            value: form.pregnancyStatus,
             isExpanded: true,
             underline: const SizedBox(),
             items: PregnancyStatus.values.map((status) {
@@ -495,13 +544,11 @@ class _InputHomeState extends State<InputHome> {
                 child: Text(status.label),
               );
             }).toList(),
-            onChanged: (newStatus) {
-              setState(() {
-                _pregnancyStatus = newStatus ?? PregnancyStatus.notApplicable;
-              });
-            },
+            onChanged: (newStatus) => ref
+                .read(inputFormProvider.notifier)
+                .setPregnancyStatus(newStatus ?? PregnancyStatus.notApplicable),
           ),
-          if (_pregnancyStatus != PregnancyStatus.notApplicable)
+          if (form.pregnancyStatus != PregnancyStatus.notApplicable)
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -514,33 +561,38 @@ class _InputHomeState extends State<InputHome> {
                     border: Border.all(color: kAccent.withOpacity(0.3)),
                   ),
                   child: Text(
-                    _pregnancyStatus.guidance,
-                    style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+                    form.pregnancyStatus.guidance,
+                    style: TextStyle(
+                        fontSize: 12,
+                        color: DynamicColors.textSecondary(context)),
                   ),
                 ),
-                if (_pregnancyStatus != PregnancyStatus.postpartum)
+                if (form.pregnancyStatus != PregnancyStatus.postpartum)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: kSpaceSM),
                       Text(
-                        AppLocalizations.of(context).prePregnancyWeight,
-                        style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+                        l10n.prePregnancyWeight,
+                        style: TextStyle(
+                            fontSize: 12,
+                            color: DynamicColors.textSecondary(context)),
                       ),
                       const SizedBox(height: kSpaceSM),
                       TextField(
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                        onChanged: (value) {
-                          setState(() {
-                            _prePregnancyWeight = double.tryParse(value);
-                          });
-                        },
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        onChanged: (value) => ref
+                            .read(inputFormProvider.notifier)
+                            .setPrePregnancyWeight(double.tryParse(value)),
                         decoration: InputDecoration(
-                          hintText: _isMetric
-                              ? AppLocalizations.of(context).weightInKg
-                              : AppLocalizations.of(context).weightInLbs,
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: kSpaceSM, vertical: kSpaceSM),
+                          hintText: form.isMetric
+                              ? l10n.weightInKg
+                              : l10n.weightInLbs,
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(kRadiusSM)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: kSpaceSM, vertical: kSpaceSM),
                         ),
                       ),
                     ],
@@ -551,9 +603,170 @@ class _InputHomeState extends State<InputHome> {
       ),
     );
   }
+
+  Widget _buildAdvancedMetricsSection(
+      BuildContext context, WidgetRef ref, InputFormState form) {
+    final l10n = AppLocalizations.of(context);
+    final notifier = ref.read(inputFormProvider.notifier);
+
+    Widget field({
+      required String label,
+      required String hint,
+      required String? value,
+      required TextInputType keyboardType,
+      required void Function(String) onChanged,
+      String? suffix,
+    }) {
+      return TextField(
+        keyboardType: keyboardType,
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          suffixText: suffix,
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(kRadiusSM)),
+          contentPadding: const EdgeInsets.symmetric(
+              horizontal: kSpaceSM, vertical: kSpaceSM),
+        ),
+      );
+    }
+
+    return _MetricCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            l10n.advancedMetricsSubtitle,
+            style: TextStyle(
+                fontSize: 12, color: DynamicColors.textSecondary(context)),
+          ),
+          const SizedBox(height: kSpaceMD),
+          field(
+            label: l10n.waistCircumference,
+            hint: l10n.waistHint,
+            value: form.waistCm?.toString(),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            suffix: 'cm',
+            onChanged: (v) => notifier.setWaistCm(double.tryParse(v)),
+          ),
+          const SizedBox(height: kSpaceSM),
+          field(
+            label: l10n.neckCircumference,
+            hint: l10n.neckHint,
+            value: form.neckCm?.toString(),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            suffix: 'cm',
+            onChanged: (v) => notifier.setNeckCm(double.tryParse(v)),
+          ),
+          if (form.isFemale) ...[
+            const SizedBox(height: kSpaceSM),
+            field(
+              label: l10n.hipCircumference,
+              hint: l10n.hipHint,
+              value: form.hipCm?.toString(),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              suffix: 'cm',
+              onChanged: (v) => notifier.setHipCm(double.tryParse(v)),
+            ),
+          ],
+          const SizedBox(height: kSpaceSM),
+          field(
+            label: l10n.restingHeartRate,
+            hint: l10n.restingHeartRateHint,
+            value: form.restingHeartRate?.toString(),
+            keyboardType: TextInputType.number,
+            suffix: 'bpm',
+            onChanged: (v) => notifier.setRestingHeartRate(int.tryParse(v)),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ─── Sub-widgets ─────────────────────────────────────────────────────────────
+
+/// Auto-fill banner when wearable data is available (Sprint 3.1).
+class _WearableAutoFillBanner extends ConsumerWidget {
+  const _WearableAutoFillBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final w = ref.watch(wearableProvider);
+    final state = w.value;
+    if (state == null || !state.permissionGranted || state.snapshot == null) {
+      return const SizedBox.shrink();
+    }
+
+    final snap = state.snapshot!;
+    final heightCm =
+        snap.latestHeightM == null ? null : (snap.latestHeightM! * 100).round();
+    final weightKg = snap.latestWeightKg?.round();
+
+    if (heightCm == null && weightKg == null) return const SizedBox.shrink();
+
+    final parts = <String>[];
+    if (weightKg != null) parts.add('Weight $weightKg kg');
+    if (heightCm != null) parts.add('Height $heightCm cm');
+
+    final l10n = AppLocalizations.of(context);
+    return Card(
+      color: DynamicColors.surface(context),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(kRadiusMD),
+        side: BorderSide(
+          color: kAccent.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: kSpaceMD,
+          vertical: kSpaceSM,
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.monitor_heart, size: 20, color: kAccent),
+            const SizedBox(width: kSpaceSM),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    parts.join(' · '),
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: DynamicColors.textPrimary(context),
+                    ),
+                  ),
+                  Text(
+                    l10n.wearableStepInPerm,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: DynamicColors.textSecondary(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                ref.read(inputFormProvider.notifier).applyWearable(
+                      heightCm: heightCm?.toDouble(),
+                      weightKg: weightKg?.toDouble(),
+                    );
+              },
+              child: Text(l10n.wearableAutoFillUse),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 class _SectionLabel extends StatelessWidget {
   final String label;
@@ -609,7 +822,9 @@ class _GenderCard extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: kSpaceMD),
           decoration: BoxDecoration(
-            color: selected ? kAccent.withOpacity(0.15) : DynamicColors.card(context),
+            color: selected
+                ? kAccent.withOpacity(0.15)
+                : DynamicColors.card(context),
             borderRadius: BorderRadius.circular(kRadiusMD),
             border: Border.all(
               color: selected ? kAccent : DynamicColors.border(context),
@@ -628,7 +843,8 @@ class _GenderCard extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? kAccent : DynamicColors.textSecondary(context),
+                  color:
+                      selected ? kAccent : DynamicColors.textSecondary(context),
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   fontSize: 14,
                   letterSpacing: 0.3,
@@ -666,8 +882,14 @@ class _UnitToggle extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Tab(label: metricLabel, active: isMetric, onTap: () => onToggle(true)),
-          _Tab(label: imperialLabel, active: !isMetric, onTap: () => onToggle(false)),
+          _Tab(
+              label: metricLabel,
+              active: isMetric,
+              onTap: () => onToggle(true)),
+          _Tab(
+              label: imperialLabel,
+              active: !isMetric,
+              onTap: () => onToggle(false)),
         ],
       ),
     );
@@ -697,7 +919,8 @@ class _Tab extends StatelessWidget {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: active ? Colors.white : DynamicColors.textSecondary(context),
+              color:
+                  active ? Colors.white : DynamicColors.textSecondary(context),
               fontWeight: active ? FontWeight.w700 : FontWeight.w500,
               fontSize: 13,
             ),
@@ -746,6 +969,140 @@ class _CircleButton extends StatelessWidget {
           border: Border.all(color: kAccent.withOpacity(0.3)),
         ),
         child: Icon(icon, color: kAccent, size: 20),
+      ),
+    );
+  }
+}
+
+class _HealthTrackingCard extends StatelessWidget {
+  final VoidCallback onBpTap;
+  final VoidCallback onGlucoseTap;
+
+  const _HealthTrackingCard({
+    required this.onBpTap,
+    required this.onGlucoseTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return Container(
+      padding: const EdgeInsets.all(kSpaceMD),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [kAccent.withOpacity(0.15), kInfoColor.withOpacity(0.08)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(kRadiusLG),
+        border: Border.all(color: kAccent.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.favorite_outline, color: kAccent, size: 20),
+              const SizedBox(width: kSpaceSM),
+              Text(
+                l10n.trackingSectionTitle,
+                style: TextStyle(
+                  color: DynamicColors.textPrimary(context),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            l10n.trackingSectionSubtitle,
+            style: TextStyle(
+              color: DynamicColors.textSecondary(context),
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: kSpaceMD),
+          Row(
+            children: [
+              Expanded(
+                child: _TrackingTile(
+                  icon: Icons.monitor_heart,
+                  color: kErrorColor,
+                  title: l10n.bpCardTitle,
+                  subtitle: l10n.bpCardSubtitle,
+                  onTap: onBpTap,
+                ),
+              ),
+              const SizedBox(width: kSpaceSM),
+              Expanded(
+                child: _TrackingTile(
+                  icon: Icons.water_drop,
+                  color: kInfoColor,
+                  title: l10n.bsCardTitle,
+                  subtitle: l10n.bsCardSubtitle,
+                  onTap: onGlucoseTap,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrackingTile extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _TrackingTile({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(kSpaceMD),
+        decoration: BoxDecoration(
+          color: DynamicColors.card(context),
+          borderRadius: BorderRadius.circular(kRadiusMD),
+          border: Border.all(color: DynamicColors.border(context)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: color, size: 26),
+            const SizedBox(height: kSpaceSM),
+            Text(
+              title,
+              style: TextStyle(
+                color: DynamicColors.textPrimary(context),
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: DynamicColors.textSecondary(context),
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

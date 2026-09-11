@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'constants.dart';
 import 'generated/l10n/app_localizations.dart';
 import 'services/auth_service.dart';
 import 'services/sync_service.dart';
 import 'services/connectivity_service.dart';
 import 'services/session_service.dart';
+import 'services/two_factor_service.dart';
+import 'screens/two_factor_verification.dart';
 
 class RegistrationPage extends StatefulWidget {
   const RegistrationPage({super.key});
@@ -24,6 +27,16 @@ class _RegistrationPageState extends State<RegistrationPage> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _isLoading = false;
+  static const _socialProviders = [
+    ('google', 'Google'),
+    ('microsoft', 'Microsoft'),
+    ('facebook', 'Facebook'),
+    ('twitter', 'Twitter'),
+    ('apple', 'Apple'),
+    ('github', 'GitHub'),
+    ('instagram', 'Instagram'),
+    ('tiktok', 'TikTok'),
+  ];
 
   @override
   void dispose() {
@@ -68,7 +81,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
           content: Text(error),
           backgroundColor: kErrorColor,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(kRadiusSM)),
         ),
       );
     } else {
@@ -88,6 +102,84 @@ class _RegistrationPageState extends State<RegistrationPage> {
     Navigator.pushReplacementNamed(context, '/input');
   }
 
+  Future<void> _checkAndRoute2FA() async {
+    final userId = SessionService.userId;
+    if (userId == null) {
+      Navigator.pushReplacementNamed(context, '/input');
+      return;
+    }
+
+    final is2faEnabled = await TwoFactorService.isEnabled(userId);
+    if (!mounted) return;
+
+    if (!is2faEnabled) {
+      Navigator.pushReplacementNamed(context, '/input');
+      return;
+    }
+
+    final deviceId = await TwoFactorService.getOrCreateDeviceId();
+    final isTrusted = await TwoFactorService.isDeviceTrusted(userId, deviceId);
+    if (!mounted) return;
+
+    if (isTrusted) {
+      await SessionService.verify2fa();
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/input');
+      return;
+    }
+
+    final methods = await TwoFactorService.getEnabledMethods(userId);
+    if (!mounted) return;
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TwoFactorVerificationScreen(
+          enrolledMethods: methods,
+        ),
+      ),
+    );
+
+    if (result == true && mounted) {
+      Navigator.pushReplacementNamed(context, '/input');
+    } else if (mounted) {
+      await AuthService.logout();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('2FA verification failed. Please try again.'),
+          backgroundColor: kErrorColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _socialSignUp(String provider) async {
+    setState(() => _isLoading = true);
+    final error = await AuthService.loginWithProvider(provider);
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(error),
+          backgroundColor: kErrorColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(kRadiusSM)),
+        ),
+      );
+      return;
+    }
+
+    final isOnline = await ConnectivityService.isOnline;
+    if (isOnline && SessionService.userId != null) {
+      await SyncService.sync(SessionService.userId!);
+    }
+    if (!mounted) return;
+    await _checkAndRoute2FA();
+  }
+
   @override
   Widget build(BuildContext context) {
     final pwStrength = _passwordStrength(_passwordController.text);
@@ -105,7 +197,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: kSpaceXL),
                 // Back button
                 GestureDetector(
-                  onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+                  onTap: () =>
+                      Navigator.pushReplacementNamed(context, '/login'),
                   child: Container(
                     padding: const EdgeInsets.all(kSpaceSM),
                     decoration: BoxDecoration(
@@ -113,7 +206,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                       borderRadius: BorderRadius.circular(kRadiusSM),
                       border: Border.all(color: DynamicColors.border(context)),
                     ),
-                    child: Icon(Icons.arrow_back, color: DynamicColors.textPrimary(context), size: 20),
+                    child: Icon(Icons.arrow_back,
+                        color: DynamicColors.textPrimary(context), size: 20),
                   ),
                 ),
                 const SizedBox(height: kSpaceLG),
@@ -128,7 +222,9 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: kSpaceXS),
                 Text(
                   AppLocalizations.of(context).startTrackingToday,
-                  style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
+                  style: TextStyle(
+                      color: DynamicColors.textSecondary(context),
+                      fontSize: 14),
                 ),
                 const SizedBox(height: kSpaceLG),
 
@@ -139,7 +235,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   controller: _nameController,
                   textCapitalization: TextCapitalization.words,
                   style: TextStyle(color: DynamicColors.textPrimary(context)),
-                  decoration: _inputDecoration(context, hint: 'John Doe', icon: Icons.person_outline),
+                  decoration: _inputDecoration(context,
+                      hint: 'John Doe', icon: Icons.person_outline),
                   validator: (v) {
                     final l10n = AppLocalizations.of(context);
                     if (v == null || v.trim().isEmpty) return l10n.nameRequired;
@@ -156,10 +253,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   style: TextStyle(color: DynamicColors.textPrimary(context)),
-                  decoration: _inputDecoration(context, hint: 'you@example.com', icon: Icons.email_outlined),
+                  decoration: _inputDecoration(context,
+                      hint: 'you@example.com', icon: Icons.email_outlined),
                   validator: (v) {
                     final l10n = AppLocalizations.of(context);
-                    if (v == null || v.trim().isEmpty) return l10n.emailRequired;
+                    if (v == null || v.trim().isEmpty)
+                      return l10n.emailRequired;
                     if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v.trim())) {
                       return l10n.emailInvalid;
                     }
@@ -175,10 +274,12 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   style: TextStyle(color: DynamicColors.textPrimary(context)),
-                  decoration: _inputDecoration(context, hint: '+1 234 567 8900', icon: Icons.phone_outlined),
+                  decoration: _inputDecoration(context,
+                      hint: '+1 234 567 8900', icon: Icons.phone_outlined),
                   validator: (v) {
                     final l10n = AppLocalizations.of(context);
-                    if (v == null || v.trim().isEmpty) return l10n.phoneRequired;
+                    if (v == null || v.trim().isEmpty)
+                      return l10n.phoneRequired;
                     if (v.trim().length < 7) return l10n.phoneInvalid;
                     return null;
                   },
@@ -199,16 +300,20 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     icon: Icons.lock_outline,
                     suffix: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: DynamicColors.iconColor(context),
                         size: 20,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (v) {
                     final l10n = AppLocalizations.of(context);
-                    if (v == null || v.trim().isEmpty) return l10n.passwordRequired;
+                    if (v == null || v.trim().isEmpty)
+                      return l10n.passwordRequired;
                     if (v.length < 6) return l10n.passwordTooShort;
                     return null;
                   },
@@ -222,7 +327,8 @@ class _RegistrationPageState extends State<RegistrationPage> {
                 const SizedBox(height: kSpaceMD),
 
                 // Confirm Password
-                _buildLabel(context, AppLocalizations.of(context).confirmPassword),
+                _buildLabel(
+                    context, AppLocalizations.of(context).confirmPassword),
                 const SizedBox(height: kSpaceXS),
                 TextFormField(
                   controller: _confirmPasswordController,
@@ -234,17 +340,22 @@ class _RegistrationPageState extends State<RegistrationPage> {
                     icon: Icons.lock_outline,
                     suffix: IconButton(
                       icon: Icon(
-                        _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                        _obscureConfirm
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
                         color: DynamicColors.iconColor(context),
                         size: 20,
                       ),
-                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                      onPressed: () =>
+                          setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                   ),
                   validator: (v) {
                     final l10n = AppLocalizations.of(context);
-                    if (v == null || v.trim().isEmpty) return l10n.confirmPasswordRequired;
-                    if (v != _passwordController.text) return l10n.passwordsDoNotMatch;
+                    if (v == null || v.trim().isEmpty)
+                      return l10n.confirmPasswordRequired;
+                    if (v != _passwordController.text)
+                      return l10n.passwordsDoNotMatch;
                     return null;
                   },
                 ),
@@ -274,10 +385,60 @@ class _RegistrationPageState extends State<RegistrationPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : Text(AppLocalizations.of(context).createAccountTitle, style: kLargeButtonTextStyle),
+                        : Text(AppLocalizations.of(context).createAccountTitle,
+                            style: kLargeButtonTextStyle),
                   ),
                 ),
                 const SizedBox(height: kSpaceLG),
+
+                // Social Signup Section
+                Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Divider(
+                            color: DynamicColors.border(context),
+                            thickness: 1,
+                          ),
+                        ),
+                        Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: kSpaceMD),
+                          child: Text(
+                            'OR',
+                            style: TextStyle(
+                              color: DynamicColors.textSecondary(context),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Divider(
+                            color: DynamicColors.border(context),
+                            thickness: 1,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: kSpaceMD),
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      spacing: kSpaceSM,
+                      runSpacing: kSpaceSM,
+                      children: _socialProviders
+                          .map(
+                            (provider) => _buildSocialButton(
+                              icon: _socialIcon(provider.$1),
+                              label: provider.$2,
+                              onPressed: () => _socialSignUp(provider.$1),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const SizedBox(height: kSpaceLG),
+                  ],
+                ),
 
                 // Continue as Guest (optional)
                 Padding(
@@ -302,10 +463,13 @@ class _RegistrationPageState extends State<RegistrationPage> {
                   children: [
                     Text(
                       '${AppLocalizations.of(context).alreadyHaveAccount} ',
-                      style: TextStyle(color: DynamicColors.textSecondary(context), fontSize: 14),
+                      style: TextStyle(
+                          color: DynamicColors.textSecondary(context),
+                          fontSize: 14),
                     ),
                     GestureDetector(
-                      onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+                      onTap: () =>
+                          Navigator.pushReplacementNamed(context, '/login'),
                       child: Text(
                         AppLocalizations.of(context).signInLink,
                         style: TextStyle(
@@ -344,12 +508,14 @@ class _RegistrationPageState extends State<RegistrationPage> {
   }) {
     return InputDecoration(
       hintText: hint,
-      hintStyle: TextStyle(color: DynamicColors.textSecondary(context).withOpacity(0.5)),
+      hintStyle: TextStyle(
+          color: DynamicColors.textSecondary(context).withOpacity(0.5)),
       prefixIcon: Icon(icon, color: DynamicColors.iconColor(context), size: 20),
       suffixIcon: suffix,
       filled: true,
       fillColor: DynamicColors.card(context),
-      contentPadding: const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: 14),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(kRadiusMD),
         borderSide: BorderSide(color: DynamicColors.border(context)),
@@ -372,6 +538,79 @@ class _RegistrationPageState extends State<RegistrationPage> {
       ),
     );
   }
+
+  Widget _buildSocialButton({
+    required Widget icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: 88,
+      height: 88,
+      child: Column(
+        children: [
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _isLoading ? null : onPressed,
+              borderRadius: BorderRadius.circular(kRadiusMD),
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
+                  borderRadius: BorderRadius.circular(kRadiusMD),
+                  border: Border.all(
+                    color: DynamicColors.border(context),
+                  ),
+                ),
+                child: IconTheme(
+                  data: IconThemeData(
+                    size: 24,
+                    color: DynamicColors.textPrimary(context),
+                  ),
+                  child: Center(child: icon),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: kSpaceXS),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: DynamicColors.textSecondary(context),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _socialIcon(String provider) {
+    switch (provider) {
+      case 'google':
+        return const FaIcon(FontAwesomeIcons.google);
+      case 'microsoft':
+        return const FaIcon(FontAwesomeIcons.microsoft);
+      case 'facebook':
+        return const FaIcon(FontAwesomeIcons.facebook);
+      case 'twitter':
+        return const FaIcon(FontAwesomeIcons.xTwitter);
+      case 'apple':
+        return const FaIcon(FontAwesomeIcons.apple);
+      case 'github':
+        return const FaIcon(FontAwesomeIcons.github);
+      case 'instagram':
+        return const FaIcon(FontAwesomeIcons.instagram);
+      case 'tiktok':
+        return const FaIcon(FontAwesomeIcons.tiktok);
+      default:
+        return const Icon(Icons.login);
+    }
+  }
 }
 
 class _PasswordStrengthBar extends StatelessWidget {
@@ -382,8 +621,18 @@ class _PasswordStrengthBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final levelLabels = ['', l10n.passwordWeak, l10n.passwordMedium, l10n.passwordStrong];
-    final colors = [Colors.transparent, kErrorColor, kWarningColor, kSuccessColor];
+    final levelLabels = [
+      '',
+      l10n.passwordWeak,
+      l10n.passwordMedium,
+      l10n.passwordStrong
+    ];
+    final colors = [
+      Colors.transparent,
+      kErrorColor,
+      kWarningColor,
+      kSuccessColor
+    ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,7 +645,9 @@ class _PasswordStrengthBar extends StatelessWidget {
                 margin: EdgeInsets.only(right: i < 2 ? 4 : 0),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
-                  color: i < strength ? colors[strength] : DynamicColors.border(context),
+                  color: i < strength
+                      ? colors[strength]
+                      : DynamicColors.border(context),
                 ),
               ),
             );

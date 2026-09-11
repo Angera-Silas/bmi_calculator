@@ -107,6 +107,57 @@ class _StatsScreenState extends State<StatsScreen> {
             }),
             const SizedBox(height: kSpaceMD),
 
+            // ── Export action ───────────────────────────────────────────────
+            _SectionCard(
+              child: InkWell(
+                onTap: () => Navigator.pushNamed(context, '/export'),
+                borderRadius: BorderRadius.circular(kRadiusMD),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: kAccent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(kRadiusSM),
+                        ),
+                        child: const Icon(Icons.share, color: kAccent, size: 20),
+                      ),
+                      const SizedBox(width: kSpaceSM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Export health report',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: DynamicColors.textPrimary(context),
+                              ),
+                            ),
+                            Text(
+                              'Share as PDF or CSV',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: DynamicColors.textSecondary(context),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.chevron_right,
+                        color: DynamicColors.textSecondary(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: kSpaceMD),
+
             // ── BMI Trend Chart ─────────────────────────────────────────────
             _SectionCard(
               child: Column(

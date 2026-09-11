@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// Supported 2FA methods
 enum TwoFactorMethod { totp, email, sms, passkey }
 
@@ -64,7 +62,8 @@ class TwoFactorConfig {
   });
 
   /// Create from Firestore document
-  factory TwoFactorConfig.fromFirestore(Map<String, dynamic> data, String userId) {
+  factory TwoFactorConfig.fromFirestore(
+      Map<String, dynamic> data, String userId) {
     return TwoFactorConfig(
       userId: userId,
       isEnabled: data['isEnabled'] as bool? ?? false,
@@ -75,9 +74,12 @@ class TwoFactorConfig {
       primaryMethod: data['primaryMethod'] != null
           ? TwoFactorMethodString.fromString(data['primaryMethod'] as String)
           : TwoFactorMethod.email,
-      createdAt: data['createdAt'] != null ? DateTime.parse(data['createdAt'] as String) : null,
-      lastUpdatedAt:
-          data['lastUpdatedAt'] != null ? DateTime.parse(data['lastUpdatedAt'] as String) : null,
+      createdAt: data['createdAt'] != null
+          ? DateTime.parse(data['createdAt'] as String)
+          : null,
+      lastUpdatedAt: data['lastUpdatedAt'] != null
+          ? DateTime.parse(data['lastUpdatedAt'] as String)
+          : null,
       totpSecretEncrypted: data['totpSecretEncrypted'] as String?,
       smsPhoneEncrypted: data['smsPhoneEncrypted'] as String?,
       passkeyCredentialEncrypted: data['passkeyCredentialEncrypted'] as String?,
@@ -103,40 +105,43 @@ class TwoFactorConfig {
   /// Create from SQLite row
   factory TwoFactorConfig.fromSqlite(Map<String, dynamic> data) {
     return TwoFactorConfig(
-      userId: data['userId'] as String,
-      isEnabled: (data['isEnabled'] as int?) == 1,
-      enrolledMethods: (data['enrolledMethods'] as String?)
+      userId: data['user_id'] as String,
+      isEnabled: (data['is_enabled'] as int?) == 1,
+      enrolledMethods: (data['enrolled_methods'] as String?)
               ?.split(',')
               .map((m) => TwoFactorMethodString.fromString(m.trim()))
               .toList() ??
           [],
-      primaryMethod: data['primaryMethod'] != null
-          ? TwoFactorMethodString.fromString(data['primaryMethod'] as String)
+      primaryMethod: data['primary_method'] != null
+          ? TwoFactorMethodString.fromString(data['primary_method'] as String)
           : TwoFactorMethod.email,
-      createdAt:
-          data['createdAt'] != null ? DateTime.parse(data['createdAt'] as String) : null,
-      lastUpdatedAt:
-          data['lastUpdatedAt'] != null ? DateTime.parse(data['lastUpdatedAt'] as String) : null,
-      totpSecretEncrypted: data['totpSecretEncrypted'] as String?,
-      smsPhoneEncrypted: data['smsPhoneEncrypted'] as String?,
-      passkeyCredentialEncrypted: data['passkeyCredentialEncrypted'] as String?,
-      recoveryCodesRemaining: data['recoveryCodesRemaining'] as int? ?? 0,
+      createdAt: data['created_at'] != null
+          ? DateTime.parse(data['created_at'] as String)
+          : null,
+      lastUpdatedAt: data['last_updated_at'] != null
+          ? DateTime.parse(data['last_updated_at'] as String)
+          : null,
+      totpSecretEncrypted: data['totp_secret_encrypted'] as String?,
+      smsPhoneEncrypted: data['sms_phone_encrypted'] as String?,
+      passkeyCredentialEncrypted:
+          data['passkey_credential_encrypted'] as String?,
+      recoveryCodesRemaining: data['recovery_codes_remaining'] as int? ?? 0,
     );
   }
 
   /// Convert to SQLite row
   Map<String, dynamic> toSqlite() {
     return {
-      'userId': userId,
-      'isEnabled': isEnabled ? 1 : 0,
-      'enrolledMethods': enrolledMethods.map((m) => m.value).join(','),
-      'primaryMethod': primaryMethod.value,
-      'createdAt': createdAt?.toIso8601String(),
-      'lastUpdatedAt': lastUpdatedAt?.toIso8601String(),
-      'totpSecretEncrypted': totpSecretEncrypted,
-      'smsPhoneEncrypted': smsPhoneEncrypted,
-      'passkeyCredentialEncrypted': passkeyCredentialEncrypted,
-      'recoveryCodesRemaining': recoveryCodesRemaining,
+      'user_id': userId,
+      'is_enabled': isEnabled ? 1 : 0,
+      'enrolled_methods': enrolledMethods.map((m) => m.value).join(','),
+      'primary_method': primaryMethod.value,
+      'created_at': createdAt?.toIso8601String(),
+      'last_updated_at': lastUpdatedAt?.toIso8601String(),
+      'totp_secret_encrypted': totpSecretEncrypted,
+      'sms_phone_encrypted': smsPhoneEncrypted,
+      'passkey_credential_encrypted': passkeyCredentialEncrypted,
+      'recovery_codes_remaining': recoveryCodesRemaining,
     };
   }
 
@@ -161,7 +166,8 @@ class TwoFactorConfig {
       smsPhoneEncrypted: smsPhoneEncrypted ?? this.smsPhoneEncrypted,
       passkeyCredentialEncrypted:
           passkeyCredentialEncrypted ?? this.passkeyCredentialEncrypted,
-      recoveryCodesRemaining: recoveryCodesRemaining ?? this.recoveryCodesRemaining,
+      recoveryCodesRemaining:
+          recoveryCodesRemaining ?? this.recoveryCodesRemaining,
     );
   }
 }
@@ -185,7 +191,9 @@ class TwoFactorBackupCode {
       userId: data['userId'] as String,
       code: data['code'] as String,
       isUsed: (data['isUsed'] as int?) == 1,
-      usedAt: data['usedAt'] != null ? DateTime.parse(data['usedAt'] as String) : null,
+      usedAt: data['usedAt'] != null
+          ? DateTime.parse(data['usedAt'] as String)
+          : null,
     );
   }
 

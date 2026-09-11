@@ -1,23 +1,35 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../database/app_database.dart';
 
 /// Manages the current user session — guest or authenticated.
 ///
 /// Single source of truth for "who is the current user" across the app.
-/// Persists session state across cold starts via [SharedPreferences].
+/// Persists sensitive session data via [FlutterSecureStorage] and non-sensitive
+/// flags via [SharedPreferences].
 class SessionService {
   static const String guestId = 'guest';
 
+  // Secure storage keys (sensitive data)
   static const _keyUserId = 'ss_user_id';
+  static const _keyUserEmail = 'ss_user_email';
+  static const _keySessionStart = 'ss_session_start';
+
+  // SharedPreferences keys (non-sensitive flags)
   static const _keyIsGuest = 'ss_is_guest';
   static const _key2faVerified = 'ss_2fa_verified';
-  static const _keyUserEmail = 'ss_user_email';
+
+  static const _secureStorage = FlutterSecureStorage();
+
+  /// Session duration before automatic expiry (24 hours).
+  static const _sessionDuration = Duration(hours: 24);
 
   static String? _userId;
   static bool _isGuest = false;
   static bool _is2faVerified = false;
   static String? _userEmail;
+  static DateTime? _sessionStartTime;
 
   // ── Accessors ──────────────────────────────────────────────────────────────
 
@@ -36,16 +48,48 @@ class SessionService {
   /// Restores the persisted session and reconciles it with Firebase Auth state.
   static Future<void> initialize() async {
     final prefs = await SharedPreferences.getInstance();
-    _userId = prefs.getString(_keyUserId);
     _isGuest = prefs.getBool(_keyIsGuest) ?? false;
     _is2faVerified = prefs.getBool(_key2faVerified) ?? false;
-    _userEmail = prefs.getString(_keyUserEmail);
 
-    // If we had a registered session but Firebase Auth has no current user,
-    // the token has expired — clear the stale session.
+    _userId = await _secureStorage.read(key: _keyUserId);
+    _userEmail = await _secureStorage.read(key: _keyUserEmail);
+    final startStr = await _secureStorage.read(key: _keySessionStart);
+    if (startStr != null) {
+      _sessionStartTime = DateTime.tryParse(startStr);
+    }
+
+    // Expired session — clear it.
+    if (_userId != null && !await isSessionValid()) {
+      await clear();
+      return;
+    }
+
+    // Stale Firebase session — token expired.
     if (isAuthenticated && FirebaseAuth.instance.currentUser == null) {
       await clear();
     }
+  }
+
+  /// Whether the current session is still within the allowed duration.
+  static Future<bool> isSessionValid() async {
+    if (_sessionStartTime == null) return false;
+    return DateTime.now().difference(_sessionStartTime!) < _sessionDuration;
+  }
+
+  // ── Test hooks ─────────────────────────────────────────────────────────────
+
+  /// Resets in-memory state. Test-only; not used in production.
+  static void resetForTesting() {
+    _userId = null;
+    _isGuest = false;
+    _is2faVerified = false;
+    _userEmail = null;
+    _sessionStartTime = null;
+  }
+
+  /// Overrides the session start time. Test-only; not used in production.
+  static void setSessionStartForTesting(DateTime time) {
+    _sessionStartTime = time;
   }
 
   // ── Session transitions ────────────────────────────────────────────────────
@@ -54,6 +98,9 @@ class SessionService {
   static Future<void> startGuest() async {
     _userId = guestId;
     _isGuest = true;
+    _is2faVerified = false;
+    _userEmail = null;
+    _sessionStartTime = DateTime.now();
     await _persist();
 
     await AppDatabase.upsertUser(
@@ -72,7 +119,9 @@ class SessionService {
   }) async {
     _userId = uid;
     _isGuest = false;
+    _is2faVerified = false;
     _userEmail = email;
+    _sessionStartTime = DateTime.now();
     await _persist();
 
     await AppDatabase.upsertUser(
@@ -84,16 +133,21 @@ class SessionService {
     );
   }
 
-  /// Clear the session (sign-out / account deletion).
+  /// Clear the session (sign-out / account deletion / expiry).
   static Future<void> clear() async {
     _userId = null;
     _isGuest = false;
+    _is2faVerified = false;
     _userEmail = null;
+    _sessionStartTime = null;
+
+    await _secureStorage.delete(key: _keyUserId);
+    await _secureStorage.delete(key: _keyUserEmail);
+    await _secureStorage.delete(key: _keySessionStart);
+
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyUserId);
     await prefs.remove(_keyIsGuest);
     await prefs.remove(_key2faVerified);
-    await prefs.remove(_keyUserEmail);
   }
 
   /// Mark 2FA as verified for current session
@@ -103,22 +157,24 @@ class SessionService {
     await prefs.setBool(_key2faVerified, true);
   }
 
-  /// Reset 2FA verification (for logout or session expiry)
-  static Future<void> _reset2fa() async {
-    _is2faVerified = false;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_key2faVerified);
-  }
-
   // ── Helpers ────────────────────────────────────────────────────────────────
 
   static Future<void> _persist() async {
+    // Sensitive data → encrypted storage
+    await _secureStorage.write(key: _keyUserId, value: _userId!);
+    await _secureStorage.write(
+      key: _keySessionStart,
+      value: _sessionStartTime!.toIso8601String(),
+    );
+    if (_userEmail != null) {
+      await _secureStorage.write(key: _keyUserEmail, value: _userEmail!);
+    } else {
+      await _secureStorage.delete(key: _keyUserEmail);
+    }
+
+    // Non-sensitive flags → SharedPreferences
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyUserId, _userId!);
     await prefs.setBool(_keyIsGuest, _isGuest);
     await prefs.setBool(_key2faVerified, _is2faVerified);
-    if (_userEmail != null) {
-      await prefs.setString(_keyUserEmail, _userEmail!);
-    }
   }
 }

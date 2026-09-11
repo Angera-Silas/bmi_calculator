@@ -45,7 +45,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
       }
 
       final userEmail = widget.userEmail ?? 'user@example.com';
-      final qrUrl = await TwoFactorService.generateTotpSecret(userId, userEmail);
+      final qrUrl =
+          await TwoFactorService.generateTotpSecret(userId, userEmail);
       setState(() {
         _qrCodeUrl = qrUrl;
         _isLoading = false;
@@ -147,7 +148,9 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(kSpaceLG),
-              child: _showBackupCodes ? _buildBackupCodesView() : _buildTotpSetupView(),
+              child: _showBackupCodes
+                  ? _buildBackupCodesView()
+                  : _buildTotpSetupView(),
             ),
     );
   }
@@ -168,7 +171,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
         const SizedBox(height: kSpaceXS),
         Text(
           'Use Google Authenticator, Microsoft Authenticator, or Authy to scan this QR code.',
-          style: TextStyle(fontSize: 14, color: DynamicColors.textSecondary(context)),
+          style: TextStyle(
+              fontSize: 14, color: DynamicColors.textSecondary(context)),
         ),
         const SizedBox(height: kSpaceLG),
 
@@ -184,11 +188,11 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
               child: SizedBox(
                 width: 250,
                 height: 250,
-                child: QrImage(
-                  data: _qrCodeUrl ??'',
+                child: QrImageView(
+                  data: _qrCodeUrl ?? '',
                   version: QrVersions.auto,
                   errorCorrectionLevel: QrErrorCorrectLevel.H,
-                  gaplessQuiet: false,
+                  gapless: false,
                 ),
               ),
             ),
@@ -215,7 +219,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
         const SizedBox(height: kSpaceXS),
         Text(
           'Enter the 6-digit code from your authenticator app.',
-          style: TextStyle(fontSize: 14, color: DynamicColors.textSecondary(context)),
+          style: TextStyle(
+              fontSize: 14, color: DynamicColors.textSecondary(context)),
         ),
         const SizedBox(height: kSpaceMD),
 
@@ -232,7 +237,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
           ),
           decoration: InputDecoration(
             hintText: '000000',
-            hintStyle: TextStyle(color: DynamicColors.textSecondary(context).withOpacity(0.3)),
+            hintStyle: TextStyle(
+                color: DynamicColors.textSecondary(context).withOpacity(0.3)),
             counterText: '',
             filled: true,
             fillColor: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
@@ -274,7 +280,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('Confirm & Continue', style: kLargeButtonTextStyle),
+                : const Text('Confirm & Continue',
+                    style: kLargeButtonTextStyle),
           ),
         ),
       ],
@@ -303,12 +310,15 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
                   children: [
                     const Text(
                       'Authenticator Enabled',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.green),
                     ),
                     const SizedBox(height: kSpaceXS),
                     Text(
                       'Save your backup codes below in a safe place.',
-                      style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: DynamicColors.textSecondary(context)),
                     ),
                   ],
                 ),
@@ -330,7 +340,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
         const SizedBox(height: kSpaceXS),
         Text(
           'Keep these codes in a safe place. Use them to access your account if you lose access to your authenticator.',
-          style: TextStyle(fontSize: 13, color: DynamicColors.textSecondary(context)),
+          style: TextStyle(
+              fontSize: 13, color: DynamicColors.textSecondary(context)),
         ),
         const SizedBox(height: kSpaceMD),
 
@@ -389,7 +400,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
   Widget _buildBackupCodeTile(String code) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: kSpaceXS),
+        padding: const EdgeInsets.symmetric(
+            horizontal: kSpaceMD, vertical: kSpaceXS),
         decoration: BoxDecoration(
           color: DynamicColors.bg(context),
           borderRadius: BorderRadius.circular(kRadiusSM),

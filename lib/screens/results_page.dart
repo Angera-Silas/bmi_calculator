@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../constants.dart';
 import '../calculator_brain.dart';
 import '../generated/l10n/app_localizations.dart';
 import '../models/diet_recommendation.dart';
 import '../widgets/bmi_gauge.dart';
+import '../widgets/health_metric_card.dart';
 
 class ResultsPage extends StatelessWidget {
   const ResultsPage({
@@ -20,7 +22,7 @@ class ResultsPage extends StatelessWidget {
   final String interpretation;
   final CalculatorBrain calculator;
 
-  void _share(BuildContext context) {
+  void _copyResult(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final text = l10n.shareText(bmiResult, resultText, interpretation);
     Clipboard.setData(ClipboardData(text: text));
@@ -29,7 +31,32 @@ class ResultsPage extends StatelessWidget {
         content: Text(l10n.resultCopied),
         backgroundColor: kSuccessColor,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(kRadiusSM)),
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(kRadiusSM)),
+      ),
+    );
+  }
+
+  void _shareResult(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final text = l10n.shareText(bmiResult, resultText, interpretation);
+    SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        subject: 'BMI Calculator Result',
+      ),
+    );
+  }
+
+  void _shareAppInvite(BuildContext context) {
+    const appLink =
+        'https://play.google.com/store/apps/details?id=com.angerasilas.bmi_calculator';
+    final text =
+        'Track your BMI and health trends with BMI Calculator.\n$appLink';
+    SharePlus.instance.share(
+      ShareParams(
+        text: text,
+        subject: 'Join me on BMI Calculator',
       ),
     );
   }
@@ -67,8 +94,21 @@ class ResultsPage extends StatelessWidget {
               ),
               actions: [
                 IconButton(
-                  icon: Icon(Icons.ios_share_outlined, color: DynamicColors.textSecondary(context)),
-                  onPressed: () => _share(context),
+                  icon: Icon(Icons.ios_share_outlined,
+                      color: DynamicColors.textSecondary(context)),
+                  onPressed: () => _shareResult(context),
+                  tooltip: 'Share result',
+                ),
+                IconButton(
+                  icon: Icon(Icons.person_add_alt_1,
+                      color: DynamicColors.textSecondary(context)),
+                  onPressed: () => _shareAppInvite(context),
+                  tooltip: 'Invite friends',
+                ),
+                IconButton(
+                  icon: Icon(Icons.copy_outlined,
+                      color: DynamicColors.textSecondary(context)),
+                  onPressed: () => _copyResult(context),
                   tooltip: l10n.copyToClipboard,
                 ),
                 const SizedBox(width: 4),
@@ -79,15 +119,16 @@ class ResultsPage extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: kSpaceMD),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-
                   // ── Category Badge ────────────────────────────────────────
                   Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: kSpaceMD, vertical: kSpaceXS),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: kSpaceMD, vertical: kSpaceXS),
                       decoration: BoxDecoration(
                         color: categoryColor.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(kRadiusXL),
-                        border: Border.all(color: categoryColor.withOpacity(0.4)),
+                        border:
+                            Border.all(color: categoryColor.withOpacity(0.4)),
                       ),
                       child: Text(
                         resultText.toUpperCase(),
@@ -147,7 +188,8 @@ class ResultsPage extends StatelessWidget {
                             color: categoryColor.withOpacity(0.15),
                             borderRadius: BorderRadius.circular(kRadiusSM),
                           ),
-                          child: Icon(Icons.info_outline, color: categoryColor, size: 18),
+                          child: Icon(Icons.info_outline,
+                              color: categoryColor, size: 18),
                         ),
                         const SizedBox(width: kSpaceMD),
                         Expanded(
@@ -196,20 +238,23 @@ class ResultsPage extends StatelessWidget {
                           children: [
                             _StatChip(
                               label: l10n.minLabel,
-                              value: '${idealRange['min']!.toStringAsFixed(1)} kg',
+                              value:
+                                  '${idealRange['min']!.toStringAsFixed(1)} kg',
                               color: kUnderweightColor,
                             ),
                             const SizedBox(width: kSpaceSM),
                             _StatChip(
                               label: l10n.maxLabel,
-                              value: '${idealRange['max']!.toStringAsFixed(1)} kg',
+                              value:
+                                  '${idealRange['max']!.toStringAsFixed(1)} kg',
                               color: kOverweightColor,
                             ),
                           ],
                         ),
                         const SizedBox(height: kSpaceSM),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: kSpaceSM, vertical: kSpaceXS),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: kSpaceSM, vertical: kSpaceXS),
                           decoration: BoxDecoration(
                             color: categoryColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(kRadiusSM),
@@ -243,9 +288,13 @@ class ResultsPage extends StatelessWidget {
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
                                       color: kWarningColor.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(kRadiusSM),
+                                      borderRadius:
+                                          BorderRadius.circular(kRadiusSM),
                                     ),
-                                    child: const Icon(Icons.local_fire_department_outlined, color: kWarningColor, size: 16),
+                                    child: const Icon(
+                                        Icons.local_fire_department_outlined,
+                                        color: kWarningColor,
+                                        size: 16),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -253,7 +302,8 @@ class ResultsPage extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: DynamicColors.textSecondary(context),
+                                      color:
+                                          DynamicColors.textSecondary(context),
                                     ),
                                   ),
                                 ],
@@ -291,9 +341,11 @@ class ResultsPage extends StatelessWidget {
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
                                       color: kInfoColor.withOpacity(0.15),
-                                      borderRadius: BorderRadius.circular(kRadiusSM),
+                                      borderRadius:
+                                          BorderRadius.circular(kRadiusSM),
                                     ),
-                                    child: const Icon(Icons.water_drop_outlined, color: kInfoColor, size: 16),
+                                    child: const Icon(Icons.water_drop_outlined,
+                                        color: kInfoColor, size: 16),
                                   ),
                                   const SizedBox(width: 8),
                                   Text(
@@ -301,7 +353,8 @@ class ResultsPage extends StatelessWidget {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
-                                      color: DynamicColors.textSecondary(context),
+                                      color:
+                                          DynamicColors.textSecondary(context),
                                     ),
                                   ),
                                 ],
@@ -330,6 +383,26 @@ class ResultsPage extends StatelessWidget {
                   ),
                   const SizedBox(height: kSpaceMD),
 
+                  // ── Advanced Health Metrics (Phase 1) ─────────────────────
+                  if (_hasAdvancedMetrics(calculator))
+                    _SectionCard(
+                      isDark: isDark,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _CardTitle(
+                            context: context,
+                            icon: Icons.monitor_heart_outlined,
+                            iconColor: kAccent,
+                            title: l10n.healthMetricsTitle,
+                          ),
+                          const SizedBox(height: kSpaceMD),
+                          ..._healthMetricCards(context, calculator),
+                        ],
+                      ),
+                    ),
+                  const SizedBox(height: kSpaceMD),
+
                   // ── Health Warning (if applicable) ────────────────────────
                   if ((calculator.getHealthWarning() ?? '').isNotEmpty)
                     _SectionCard(
@@ -343,9 +416,11 @@ class ResultsPage extends StatelessWidget {
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
                                   color: kErrorColor.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(kRadiusSM),
+                                  borderRadius:
+                                      BorderRadius.circular(kRadiusSM),
                                 ),
-                                child: const Icon(Icons.warning_outlined, color: kErrorColor, size: 18),
+                                child: const Icon(Icons.warning_outlined,
+                                    color: kErrorColor, size: 18),
                               ),
                               const SizedBox(width: kSpaceMD),
                               Expanded(
@@ -357,14 +432,16 @@ class ResultsPage extends StatelessWidget {
                                       style: TextStyle(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 14,
-                                        color: DynamicColors.textPrimary(context),
+                                        color:
+                                            DynamicColors.textPrimary(context),
                                       ),
                                     ),
                                     const SizedBox(height: kSpaceXS),
                                     Text(
                                       calculator.getHealthWarning() ?? '',
                                       style: TextStyle(
-                                        color: DynamicColors.textSecondary(context),
+                                        color: DynamicColors.textSecondary(
+                                            context),
                                         fontSize: 13,
                                         height: 1.5,
                                       ),
@@ -417,7 +494,8 @@ class ResultsPage extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: kWarningColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(kRadiusSM),
-                            border: Border.all(color: kWarningColor.withOpacity(0.3)),
+                            border: Border.all(
+                                color: kWarningColor.withOpacity(0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,13 +509,14 @@ class ResultsPage extends StatelessWidget {
                                 ),
                               ),
                               const SizedBox(height: kSpaceXS),
-                              ...dietRec.mealsPerDay.map((meal) =>
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 2),
+                              ...dietRec.mealsPerDay.map((meal) => Padding(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 2),
                                     child: Text(
                                       '• $meal',
                                       style: TextStyle(
-                                        color: DynamicColors.textSecondary(context),
+                                        color: DynamicColors.textSecondary(
+                                            context),
                                         fontSize: 12,
                                       ),
                                     ),
@@ -452,7 +531,8 @@ class ResultsPage extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: kInfoColor.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(kRadiusSM),
-                            border: Border.all(color: kInfoColor.withOpacity(0.3)),
+                            border:
+                                Border.all(color: kInfoColor.withOpacity(0.3)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -490,25 +570,27 @@ class ResultsPage extends StatelessWidget {
                         Wrap(
                           spacing: kSpaceSM,
                           runSpacing: kSpaceXS,
-                          children: dietRec.foodGroups.map((food) =>
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: kSpaceSM, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: kAccent.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(kRadiusSM),
-                                  border: Border.all(
-                                      color: kAccent.withOpacity(0.3)),
-                                ),
-                                child: Text(
-                                  food,
-                                  style: TextStyle(
-                                    color: kAccent,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              )).toList(),
+                          children: dietRec.foodGroups
+                              .map((food) => Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: kSpaceSM, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: kAccent.withOpacity(0.15),
+                                      borderRadius:
+                                          BorderRadius.circular(kRadiusSM),
+                                      border: Border.all(
+                                          color: kAccent.withOpacity(0.3)),
+                                    ),
+                                    child: Text(
+                                      food,
+                                      style: TextStyle(
+                                        color: kAccent,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ))
+                              .toList(),
                         ),
                         const SizedBox(height: kSpaceMD),
                         // Key recommendations
@@ -524,9 +606,11 @@ class ResultsPage extends StatelessWidget {
                         ...dietRec.recommendations
                             .take(5) // Show top 5 recommendations
                             .map((rec) => Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '✓ ',
@@ -539,7 +623,8 @@ class ResultsPage extends StatelessWidget {
                                         child: Text(
                                           rec,
                                           style: TextStyle(
-                                            color: DynamicColors.textSecondary(context),
+                                            color: DynamicColors.textSecondary(
+                                                context),
                                             fontSize: 11,
                                             height: 1.4,
                                           ),
@@ -552,7 +637,8 @@ class ResultsPage extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.only(top: kSpaceXS),
                             child: Text(
-                              l10n.moreRecommendations(dietRec.recommendations.length - 5),
+                              l10n.moreRecommendations(
+                                  dietRec.recommendations.length - 5),
                               style: TextStyle(
                                 color: DynamicColors.textSecondary(context),
                                 fontSize: 11,
@@ -598,7 +684,8 @@ class ResultsPage extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: Text(l10n.reCalculate, style: kLargeButtonTextStyle),
+                      child:
+                          Text(l10n.reCalculate, style: kLargeButtonTextStyle),
                     ),
                   ),
                   const SizedBox(height: kSpaceLG),
@@ -634,7 +721,11 @@ class ResultsPage extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(width: 10, height: 10, decoration: BoxDecoration(color: row.$3, shape: BoxShape.circle)),
+            Container(
+                width: 10,
+                height: 10,
+                decoration:
+                    BoxDecoration(color: row.$3, shape: BoxShape.circle)),
             const SizedBox(width: kSpaceSM),
             SizedBox(
               width: 88,
@@ -663,6 +754,77 @@ class ResultsPage extends StatelessWidget {
         ),
       );
     }).toList();
+  }
+
+  // ── Advanced Health Metrics (Phase 1) ─────────────────────────────────────
+
+  bool _hasAdvancedMetrics(CalculatorBrain calculator) {
+    return calculator.waistToHeightRatio != null ||
+        calculator.bodyFatPercentage != null ||
+        calculator.vo2max != null;
+  }
+
+  List<Widget> _healthMetricCards(
+      BuildContext context, CalculatorBrain calculator) {
+    final l10n = AppLocalizations.of(context);
+    final cards = <Widget>[];
+
+    final whtr = calculator.waistToHeightRatio;
+    if (whtr != null) {
+      cards.add(HealthMetricCard(
+        title: l10n.waistToHeightRatioLabel,
+        value: whtr.value.toStringAsFixed(2),
+        unit: '',
+        categoryLabel: whtr.riskLevel.name,
+        categoryColor: MetricColors.fromRisk(context, whtr.riskLevel.name),
+        recommendation: whtr.recommendation,
+        icon: Icons.straighten,
+      ));
+      cards.add(const SizedBox(height: kSpaceSM));
+    }
+
+    final bodyFat = calculator.bodyFatPercentage;
+    if (bodyFat != null) {
+      cards.add(HealthMetricCard(
+        title: l10n.bodyFatLabel,
+        value: bodyFat.percent.toStringAsFixed(1),
+        unit: '%',
+        categoryLabel: bodyFat.category.name,
+        categoryColor: MetricColors.fromRisk(context, bodyFat.category.name),
+        recommendation: bodyFat.recommendation,
+        icon: Icons.monitor_heart_outlined,
+      ));
+      cards.add(const SizedBox(height: kSpaceSM));
+    }
+
+    final metabolicAge = calculator.metabolicAge;
+    if (metabolicAge != null) {
+      cards.add(HealthMetricCard(
+        title: l10n.metabolicAgeLabel,
+        value: '${metabolicAge.value}',
+        unit: l10n.years,
+        categoryLabel: metabolicAge.status.name,
+        categoryColor: MetricColors.fromRisk(context, metabolicAge.status.name),
+        recommendation: metabolicAge.recommendation,
+        icon: Icons.hourglass_bottom,
+      ));
+      cards.add(const SizedBox(height: kSpaceSM));
+    }
+
+    final vo2 = calculator.vo2max;
+    if (vo2 != null) {
+      cards.add(HealthMetricCard(
+        title: l10n.vo2maxLabel,
+        value: vo2.value.toStringAsFixed(1),
+        unit: 'mL/kg/min',
+        categoryLabel: vo2.category.name,
+        categoryColor: MetricColors.fromRisk(context, vo2.category.name),
+        recommendation: vo2.recommendation,
+        icon: Icons.favorite_outline,
+      ));
+    }
+
+    return cards;
   }
 }
 
@@ -733,13 +895,15 @@ class _StatChip extends StatelessWidget {
   final String value;
   final Color color;
 
-  const _StatChip({required this.label, required this.value, required this.color});
+  const _StatChip(
+      {required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: kSpaceSM, vertical: kSpaceSM),
+        padding: const EdgeInsets.symmetric(
+            horizontal: kSpaceSM, vertical: kSpaceSM),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
           borderRadius: BorderRadius.circular(kRadiusSM),

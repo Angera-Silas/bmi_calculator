@@ -34,13 +34,13 @@ class _TwoFactorVerificationScreenState
   void initState() {
     super.initState();
     _selectedMethod = widget.selectedMethod ?? widget.enrolledMethods.first;
-    _generateDeviceId();
-    _initiateSmsIfNeeded();
+    _initializeVerification();
   }
 
-  void _generateDeviceId() {
-    // Generate a simple device identifier (in production, use device_info_plus)
-    _deviceId = '${DateTime.now().millisecondsSinceEpoch}_device';
+  Future<void> _initializeVerification() async {
+    _deviceId = await TwoFactorService.getOrCreateDeviceId();
+    if (!mounted) return;
+    await _initiateSmsIfNeeded();
   }
 
   Future<void> _initiateSmsIfNeeded() async {
@@ -48,7 +48,8 @@ class _TwoFactorVerificationScreenState
       final userId = SessionService.userId;
       if (userId != null) {
         // Check rate limit first
-        final rateLimitError = await TwoFactorService.checkOtpRateLimit(userId, TwoFactorMethod.sms);
+        final rateLimitError = await TwoFactorService.checkOtpRateLimit(
+            userId, TwoFactorMethod.sms);
         if (rateLimitError != null && mounted) {
           _showError(rateLimitError);
           return;
@@ -56,7 +57,8 @@ class _TwoFactorVerificationScreenState
 
         final verificationId = await TwoFactorService.sendSmsOtp(userId);
         if (verificationId == null && mounted) {
-          _showError('Failed to send SMS code. You may have exceeded the rate limit.');
+          _showError(
+              'Failed to send SMS code. You may have exceeded the rate limit.');
         } else if (verificationId != null && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -146,6 +148,11 @@ class _TwoFactorVerificationScreenState
       setState(() => _isLoading = false);
       _showError('Error: $e');
     }
+  }
+
+  Future<void> _selectMethod(TwoFactorMethod method) async {
+    setState(() => _selectedMethod = method);
+    await _initiateSmsIfNeeded();
   }
 
   Future<void> _verifyRecoveryCode() async {
@@ -253,7 +260,8 @@ class _TwoFactorVerificationScreenState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('We\'ll send a recovery link to your registered email address.'),
+            const Text(
+                'We\'ll send a recovery link to your registered email address.'),
             const SizedBox(height: kSpaceXL),
             const Text('Processing...'),
           ],
@@ -291,7 +299,6 @@ class _TwoFactorVerificationScreenState
       }
     }
   }
-
 
   @override
   void dispose() {
@@ -341,7 +348,7 @@ class _TwoFactorVerificationScreenState
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () => setState(() => _selectedMethod = method),
+                    onTap: () => _selectMethod(method),
                     borderRadius: BorderRadius.circular(kRadiusMD),
                     child: Container(
                       padding: const EdgeInsets.all(kSpaceMD),
@@ -364,7 +371,7 @@ class _TwoFactorVerificationScreenState
                             groupValue: _selectedMethod,
                             onChanged: (value) {
                               if (value != null) {
-                                setState(() => _selectedMethod = value);
+                                _selectMethod(value);
                               }
                             },
                             activeColor: kAccent,
@@ -415,7 +422,8 @@ class _TwoFactorVerificationScreenState
           const SizedBox(height: kSpaceXS),
           Text(
             _getOtpHelpText(_selectedMethod),
-            style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+            style: TextStyle(
+                fontSize: 12, color: DynamicColors.textSecondary(context)),
           ),
           const SizedBox(height: kSpaceMD),
 
@@ -485,7 +493,7 @@ class _TwoFactorVerificationScreenState
           Container(
             padding: const EdgeInsets.symmetric(horizontal: kSpaceMD),
             decoration: BoxDecoration(
-              color: DynamicColors.background(context, elevation: 1),
+              color: DynamicColors.card(context),
               borderRadius: BorderRadius.circular(kRadiusMD),
               border: Border.all(
                 color: DynamicColors.border(context),
@@ -532,7 +540,8 @@ class _TwoFactorVerificationScreenState
           const SizedBox(height: kSpaceXS),
           Text(
             'Use your fingerprint or face ID',
-            style: TextStyle(fontSize: 12, color: DynamicColors.textSecondary(context)),
+            style: TextStyle(
+                fontSize: 12, color: DynamicColors.textSecondary(context)),
           ),
           const SizedBox(height: kSpaceLG),
 
@@ -576,7 +585,8 @@ class _TwoFactorVerificationScreenState
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : const Text('Verify with Biometric', style: kLargeButtonTextStyle),
+                  : const Text('Verify with Biometric',
+                      style: kLargeButtonTextStyle),
             ),
           ),
         ],
@@ -586,7 +596,9 @@ class _TwoFactorVerificationScreenState
             'Attempts remaining: ${_maxAttempts - _attemptCount}',
             style: TextStyle(
               fontSize: 12,
-              color: _attemptCount >= 3 ? kErrorColor : DynamicColors.textSecondary(context),
+              color: _attemptCount >= 3
+                  ? kErrorColor
+                  : DynamicColors.textSecondary(context),
             ),
             textAlign: TextAlign.center,
           ),
@@ -682,7 +694,8 @@ class _TwoFactorVerificationScreenState
           style: TextStyle(color: DynamicColors.textPrimary(context)),
           decoration: InputDecoration(
             hintText: 'Enter your backup code',
-            hintStyle: TextStyle(color: DynamicColors.textSecondary(context).withOpacity(0.5)),
+            hintStyle: TextStyle(
+                color: DynamicColors.textSecondary(context).withOpacity(0.5)),
             filled: true,
             fillColor: DynamicColors.isDark(context) ? kDarkCard : kLightCard,
             border: OutlineInputBorder(
@@ -723,7 +736,8 @@ class _TwoFactorVerificationScreenState
                       valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('Verify Recovery Code', style: kLargeButtonTextStyle),
+                : const Text('Verify Recovery Code',
+                    style: kLargeButtonTextStyle),
           ),
         ),
       ],
